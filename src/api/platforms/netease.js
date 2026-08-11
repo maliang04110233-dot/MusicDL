@@ -8,6 +8,7 @@
 
 const ncm = require('NeteaseCloudMusicApi');
 const logger = require('../../utils/logger');
+const { AppError } = require('../../shared/errors');
 
 /**
  * 搜索歌曲
@@ -68,25 +69,17 @@ async function neteaseGetUrl(id, quality, cookie = '') {
         // 修复 B12：区分 VIP（fee=1）和下架/无版权（fee=0）
         // d.fee: 0=免费, 1=VIP, 4=专辑, 8=低品质免费
         if (d.fee === 1) {
-          return {
-            error: '该歌曲需要会员，请在设置中填入已登录的 Cookie',
-            code: 'VIP_REQUIRED',
-            fatal: true,
-          };
+          return AppError.vipRequired('网易云');
         }
         // fee=0 但 url=null：下架 / 版权限制 / 地区限制
-        return {
-          error: '该歌曲已下架或受版权/地区限制，无法下载',
-          code: 'COPYRIGHT_RESTRICTED',
-          fatal: true,
-        };
+        return AppError.copyright('网易云');
       }
     } catch (e) {
       console.error(`网易云获取URL失败 (id=${id}, br=${br}):`, e.message);
     }
   }
   // 所有品质都失败 — 标记 fatal
-  return { error: '该歌曲在所有品质下都无法下载（可能为下架/版权/地区限制）', code: 'UNAVAILABLE', fatal: true };
+  return AppError.unavailable('网易云');
 }
 
 /**

@@ -11,6 +11,7 @@
 const qqMusic = require('qq-music-api');
 const qqGetSign = require('qq-music-api/util/sign');
 const request = require('../request');
+const { AppError } = require('../../shared/errors');
 const {
   extractQQUin,
   extractQQMusickey,
@@ -345,19 +346,19 @@ async function qqGetUrl(id, quality, cookie = '') {
       const baseUrl = sip.find(s => !s.startsWith('http://ws')) || sip[0] || '';
       // 修复 B13：sip 为空时不要拼接出相对路径
       if (!baseUrl) {
-        return { error: 'QQ 音乐 CDN 域缺失（sip 为空）', code: 'CDN_EMPTY', fatal: true };
+        return AppError.cdnEmpty('QQ音乐');
       }
       return { url: baseUrl + info.purl, ext: q.ext };
     }
     // 细化失败原因（result=104003 通常是 VIP/auth 失败）
     const errCode = info?.result;
-    const reason = errCode === 104003
-      ? 'QQ音乐鉴权失败（cookie 中的 qqmusic_key 过期或失效，请重新登录）'
-      : 'QQ音乐无法获取链接，可能需要 VIP Cookie（请尝试用手机APP抓包获取最新Cookie）';
-    return { error: reason, code: errCode === 104003 ? 'AUTH_EXPIRED' : 'VIP_REQUIRED', fatal: true };
+    if (errCode === 104003) {
+      return { ...AppError.authExpired('QQ音乐'), error: 'QQ音乐鉴权失败（cookie 中的 qqmusic_key 过期或失效，请重新登录）' };
+    }
+    return AppError.vipRequired('QQ音乐');
   } catch (e) {
     console.error('QQ音乐获取URL失败:', e.message || e);
-    return { error: 'QQ音乐获取URL异常: ' + (e.message || e), code: 'QQ_URL_ERROR', fatal: true };
+    return AppError.internal('QQ音乐', { error: 'QQ音乐获取URL异常: ' + (e.message || e) });
   }
 }
 

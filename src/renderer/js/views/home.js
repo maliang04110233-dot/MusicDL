@@ -24,15 +24,12 @@ function _cacheHomeDom() {
 
 async function loadHomeRecommendations() {
   const _api = _getApi();
-  console.log('[Home] loadHomeRecommendations called, api:', _api ? 'OK' : 'NULL', 'getHomeSection:', typeof _api?.getHomeSection);
   if (!_api || typeof _api.getHomeSection !== 'function') {
-    console.warn('[Home] api not ready, falling back to legacy');
     return loadHomeRecommendationsLegacy();
   }
 
   // 避免重复加载
   if (homeRecommendations && homeRecommendations._loaded) {
-    console.log('[Home] already loaded, skip');
     return;
   }
 
@@ -42,7 +39,7 @@ async function loadHomeRecommendations() {
     setState('homeRecommendations', homeRecommendations);
   }
 
-  console.log('[Home] loading netease sections...');
+  // 只加载默认 Tab（网易云）— QQ/B站 由 switchPlatTab 按需加载
   const neteaseSections = [
     ['netease.tops',      (data) => { homeRecommendations.netease.tops = data; renderRecommendList('neteaseTopsList', data); }],
     ['netease.hot',       (data) => { homeRecommendations.netease.hot = data; renderRecommendList('neteaseHotList', data); }],
@@ -95,19 +92,16 @@ async function loadHomeSection(section, render) {
     return;
   }
   try {
-    console.log('[Home] loadHomeSection:', section, 'calling api...');
     const result = await Promise.race([
       _api.getHomeSection(section),
       new Promise((_, reject) => setTimeout(() => reject(new Error('请求超时(10s)')), 10000)),
     ]);
-    console.log('[Home] loadHomeSection:', section, 'result ok=', result?.ok, 'dataLen=', result?.data?.length);
     if (result?.ok) {
       render(result.data || []);
     } else {
       markHomeSectionError(section, result?.error || '加载失败');
     }
   } catch (e) {
-    console.error('[Home] loadHomeSection:', section, 'ERROR:', e.message);
     markHomeSectionError(section, e.message || String(e));
   }
 }
@@ -139,7 +133,6 @@ async function loadHomeRecommendationsLegacy() {
 // ── 渲染 ──────────────────────────────────────────────
 function renderRecommendList(elId, songs, showSource = false) {
   const el = document.getElementById(elId);
-  console.log('[Home] renderRecommendList:', elId, 'el:', el ? 'OK' : 'NULL', 'songs:', songs?.length || 0);
   if (!el) return;
   if (!Array.isArray(songs) || !songs.length) {
     el.innerHTML = '<div style="color:var(--text-muted);font-size:12px;padding:12px;">暂无数据</div>';

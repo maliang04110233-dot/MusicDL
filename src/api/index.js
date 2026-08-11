@@ -272,4 +272,6 @@ module.exports = {
   qqVerifyCookie: qq.qqVerifyCookie,
   // 插件注册中心（供外部检查）
   registry: _registry,
+  // 统一错误码
+  AppError: require('../shared/errors').AppError,
 };

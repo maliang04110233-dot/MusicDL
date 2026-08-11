@@ -123,16 +123,12 @@ let _audio = null;
 
 // ── 初始化 ─────────────────────────────────────────────
 async function init() {
-  console.log('[init] start');
   // 用 setTimeout(0) 确保不阻塞渲染管线
   await new Promise(r => setTimeout(r, 0));
-  console.log('[init] after yield');
 
   // 调试：定位 init 哪一步抛错
   try {
-    console.log('[init] step 1: getPref saveDir');
     const savedSaveDir = await api.getPref('saveDir');
-    console.log('[init] step 1 OK, value=', savedSaveDir);
     if (savedSaveDir) setState('saveDir', savedSaveDir);
     document.getElementById('saveDirText').textContent = getState('saveDir') || '';
 
@@ -142,23 +138,19 @@ async function init() {
       if (savedTheme && typeof applyTheme === 'function') applyTheme(savedTheme);
     } catch (_e) { /* 主题恢复失败使用默认 */ }
 
-    console.log('[init] step 2: getPref localDirPath');
     const savedLocalDir = await api.getPref('localDirPath');
     if (savedLocalDir) setState('localDirPath', savedLocalDir);
 
-    console.log('[init] step 3: onQueueUpdated');
     api.onQueueUpdated((queue) => {
       state.set('queueSnapshot', queue);
       renderQueue(queue);
     });
 
-    console.log('[init] step 4: onDownloadProgress');
     api.onDownloadProgress(({ id, progress }) => {
       const el = document.getElementById('prog-' + id);
       if (el) el.style.width = progress + '%';
     });
 
-    console.log('[init] step 5: onDownloadError');
     api.onDownloadError(({ title, error, fatal }) => {
       showDownloadError(title, error, fatal);
     });
@@ -177,7 +169,6 @@ async function init() {
 
   // 音频事件（独立 try-catch，不被前面的 getPref 失败影响）
   try {
-    console.log('[init] step 7: bind audio events');
     _audio = document.getElementById('audioPlayer');
     if (_audio) {
       _audio.addEventListener('timeupdate', updateProgress);
@@ -197,12 +188,11 @@ async function init() {
       _audio.addEventListener('loadedmetadata', () => {
         document.getElementById('timeTotal').textContent = fmtTime(_audio.duration);
       });
-      console.log('[init] step 7 OK: audio events bound');
     } else {
-      console.warn('[init] audio element not found, skip audio events');
+      // audio 元素不存在，跳过
     }
   } catch (e) {
-    console.error('[init] step 7 FAILED:', e);
+    console.warn('[init] 音频事件绑定失败:', e.message);
   }
 
   // ── 迷你播放器 IPC 监听 ──────────────────────────────
@@ -273,7 +263,6 @@ async function init() {
   }
 
   // ── 播放队列持久化 ─────────────────────────────────
-  console.log('[init] step 8: play queue persistence');
   let _queueRestored = false; // 防双重恢复
 
   // 辅助函数：恢复 loopMode/isShuffled 后更新按钮视觉
@@ -291,7 +280,6 @@ async function init() {
   function restorePlayQueueFromSaved(saved) {
     if (_queueRestored || !saved || !saved.queue || !saved.queue.length) return;
     _queueRestored = true;
-    console.log(`[init] 恢复播放队列 ${saved.queue.length} 首`);
     setState('playQueue', saved.queue);
     if (typeof saved.playIdx === 'number' && saved.playIdx >= 0 && saved.playIdx < saved.queue.length) {
       setState('playIdx', saved.playIdx);
@@ -359,15 +347,12 @@ async function init() {
   }
 
   // 加载首页推荐（失败不阻断主流程）
-  console.log('[init] step 9: loadHomeRecommendations');
   loadHomeRecommendations().catch(e => console.warn('首页推荐加载失败:', e.message));
 
   // 焦点到搜索框
-  console.log('[init] step 9: focus searchInput');
   const searchInput = document.getElementById('searchInput');
   if (searchInput) searchInput.focus();
 
-  console.log('[init] DONE');
   showToast('✅ 初始化完成', 'success', 1500);
   } catch (e) {
     console.error('[init] FATAL:', e);

@@ -7,6 +7,7 @@
 
 const request = require('../request');
 const logger = require('../../utils/logger');
+const { AppError } = require('../../shared/errors');
 
 /**
  * 解析时长字符串 "mm:ss" 或 "hh:mm:ss" → 秒
@@ -83,7 +84,7 @@ async function bilibiliGetUrl(bvid, quality, cookie = '') {
         referer: 'https://www.bilibili.com/',
       };
     }
-    return { error: 'B站无音频流，可能需要登录 Cookie', code: 'LOGIN_REQUIRED', fatal: true };
+    return AppError.loginRequired('B站');
   } catch (e) {
     console.error('B站获取URL失败:', e.message);
     return { error: 'B站获取URL异常: ' + (e.message || e), code: 'BILI_URL_ERROR', fatal: true };
