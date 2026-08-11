@@ -1,0 +1,273 @@
+/* ── 变量 & 重置 ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* 深色背景 */
+  --bg-deep:   #07090f;
+  --bg-card:   #0d1120;
+  --bg-hover:  #141828;
+  --bg-input:  #111525;
+  --border:    #1c2135;
+
+  /* 主题色 */
+  --accent:    #6c63ff;
+  --accent2:   #a78bfa;
+  --accent-glow: rgba(108,99,255,.35);
+  --text:      #e8e6ff;
+  --text-dim:  #8b89a8;
+  --text-muted:#4a4869;
+  --green:     #4ade80;
+  --red:       #f87171;
+  --orange:    #fb923c;
+  --gold:      #fbbf24;
+  --radius:    12px;
+  --shadow:    0 4px 24px rgba(0,0,0,.5);
+  --font:      'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+
+  /* ── CYBERPUNK NEON 色板 ──────────────────────────── */
+  /* 霓虹青（主色） */
+  --neon-cyan:       #00ffc8;
+  --neon-cyan-dim:   rgba(0,255,200,0.15);
+  /* 霓虹紫（辅色） */
+  --neon-purple:     #a78bfa;
+  --neon-purple-dim: rgba(167,139,250,0.15);
+  /* 霓虹蓝（边框/装饰） */
+  --neon-blue:       #38bdf8;
+  --neon-blue-dim:   rgba(56,189,248,0.18);
+  /* 霓虹粉（警示/高亮） */
+  --neon-pink:       #f472b6;
+  /* 霓虹绿（完成/成功） */
+  --neon-green:      #34d399;
+  /* 文字色 */
+  --neon-text:       #e2f1ff;
+  --neon-dim:        rgba(226,241,255,0.45);
+}
+
+/* ── 浅色主题 ─────────────────────────────────────── */
+[data-theme="light"] {
+  --bg-deep:   #f0f2f5;
+  --bg-card:   #ffffff;
+  --bg-hover:  #e8eaed;
+  --bg-input:  #f5f5f5;
+  --border:    #d0d5dd;
+  --accent:    #5b4cd4;
+  --accent2:   #7c6ddb;
+  --accent-glow: rgba(91,76,212,.2);
+  --text:      #1a1a2e;
+  --text-dim:  #5f6368;
+  --text-muted:#9aa0a6;
+  --green:     #16a34a;
+  --red:       #dc2626;
+  --orange:    #ea580c;
+  --gold:      #d97706;
+  --shadow:    0 2px 12px rgba(0,0,0,.08);
+  --neon-cyan:       #0891b2;
+  --neon-cyan-dim:   rgba(8,145,178,0.1);
+  --neon-purple:     #7c3aed;
+  --neon-purple-dim: rgba(124,58,237,0.1);
+  --neon-blue:       #2563eb;
+  --neon-blue-dim:   rgba(37,99,235,0.1);
+  --neon-pink:       #db2777;
+  --neon-green:      #059669;
+  --neon-text:       #1a1a2e;
+  --neon-dim:        rgba(26,26,46,0.5);
+}
+
+/* ── Cyber 赛博主题 ─────────────────────────────── */
+[data-theme="cyber"] {
+  --bg-deep:   #0a0a0f;
+  --bg-card:   #12121a;
+  --bg-hover:  #1a1a25;
+  --bg-input:  #0d0d15;
+  --border:    #00ffff30;
+  --accent:    #00ffff;
+  --accent2:   #ff00ff;
+  --accent-glow: rgba(0,255,255,.25);
+  --text:      #e0e0e0;
+  --text-dim:  #888;
+  --text-muted:#555;
+  --green:     #00ff88;
+  --red:       #ff3366;
+  --orange:    #ff9900;
+  --gold:      #ffcc00;
+  --shadow:    0 0 20px rgba(0,255,255,.15);
+  --neon-cyan:       #00ffff;
+  --neon-cyan-dim:   rgba(0,255,255,0.15);
+  --neon-purple:     #ff00ff;
+  --neon-purple-dim: rgba(255,0,255,0.15);
+  --neon-blue:       #0088ff;
+  --neon-blue-dim:   rgba(0,136,255,0.15);
+  --neon-pink:       #ff0088;
+  --neon-green:      #00ff88;
+  --neon-text:       #e0e0e0;
+  --neon-dim:        rgba(224,224,224,0.4);
+}
+
+/* ── Aurora 极光主题 ───────────────────────────── */
+[data-theme="aurora"] {
+  --bg-deep:   #0d1b2a;
+  --bg-card:   #1b263b;
+  --bg-hover:  #243447;
+  --bg-input:  #162032;
+  --border:    #415a7730;
+  --accent:    #7b68ee;
+  --accent2:   #00d4aa;
+  --accent-glow: rgba(123,104,238,.25);
+  --text:      #e0e1dd;
+  --text-dim:  #778da9;
+  --text-muted:#415a77;
+  --green:     #06d6a0;
+  --red:       #ef476f;
+  --orange:    #ffd166;
+  --gold:      #ffbe0b;
+  --shadow:    0 4px 20px rgba(0,0,0,.3);
+  --neon-cyan:       #00d4aa;
+  --neon-cyan-dim:   rgba(0,212,170,0.15);
+  --neon-purple:     #7b68ee;
+  --neon-purple-dim: rgba(123,104,238,0.15);
+  --neon-blue:       #118ab2;
+  --neon-blue-dim:   rgba(17,138,178,0.15);
+  --neon-pink:       #ef476f;
+  --neon-green:      #06d6a0;
+  --neon-text:       #e0e1dd;
+  --neon-dim:        rgba(224,225,221,0.4);
+}
+
+/* ── Sunset 日落主题 ────────────────────────────── */
+[data-theme="sunset"] {
+  --bg-deep:   #1a0a0a;
+  --bg-card:   #2a1515;
+  --bg-hover:  #3a2020;
+  --bg-input:  #251212;
+  --border:    #ff6b6b30;
+  --accent:    #ff6b6b;
+  --accent2:   #ffa500;
+  --accent-glow: rgba(255,107,107,.25);
+  --text:      #ffe4e1;
+  --text-dim:  #d4a5a5;
+  --text-muted:#8b6b6b;
+  --green:     #98d8a0;
+  --red:       #ff4757;
+  --orange:    #ffa500;
+  --gold:      #ffd700;
+  --shadow:    0 4px 20px rgba(255,107,107,.15);
+  --neon-cyan:       #ff6b6b;
+  --neon-cyan-dim:   rgba(255,107,107,0.15);
+  --neon-purple:     #ffa500;
+  --neon-purple-dim: rgba(255,165,0,0.15);
+  --neon-blue:       #ff8c42;
+  --neon-blue-dim:   rgba(255,140,66,0.15);
+  --neon-pink:       #ff6b6b;
+  --neon-green:      #98d8a0;
+  --neon-text:       #ffe4e1;
+  --neon-dim:        rgba(255,228,225,0.4);
+}
+
+/* ── Forest 森林主题 ───────────────────────────── */
+[data-theme="forest"] {
+  --bg-deep:   #0a1a0a;
+  --bg-card:   #152515;
+  --bg-hover:  #1f351f;
+  --bg-input:  #122012;
+  --border:    #228b2220;
+  --accent:    #228b22;
+  --accent2:   #90ee90;
+  --accent-glow: rgba(34,139,34,.2);
+  --text:      #e8f5e8;
+  --text-dim:  #90b890;
+  --text-muted:#5a7a5a;
+  --green:     #32cd32;
+  --red:       #cd5c5c;
+  --orange:    #ffa500;
+  --gold:      #daa520;
+  --shadow:    0 4px 20px rgba(34,139,34,.15);
+  --neon-cyan:       #228b22;
+  --neon-cyan-dim:   rgba(34,139,34,0.15);
+  --neon-purple:     #90ee90;
+  --neon-purple-dim: rgba(144,238,144,0.15);
+  --neon-blue:       #3cb371;
+  --neon-blue-dim:   rgba(60,179,113,0.15);
+  --neon-pink:       #98fb98;
+  --neon-green:      #32cd32;
+  --neon-text:       #e8f5e8;
+  --neon-dim:        rgba(232,245,232,0.4);
+}
+
+html, body {
+  width: 100%; height: 100%;
+  background: var(--bg-deep);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 14px;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── 滚动条 ─────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--neon-blue-dim); }
+
+/* ── 布局 ───────────────────────────────────────────── */
+.app { display: flex; flex-direction: column; height: 100vh; }
+
+/* ── 按钮基础 ───────────────────────────────────────── */
+button { cursor: pointer; font-family: inherit; }
+button:disabled { cursor: not-allowed; opacity: 0.5; }
+input, textarea, select { font-family: inherit; }
+
+/* ── 标题栏 ─────────────────────────────────────────── */
+.titlebar { height: 44px; display: flex; align-items: center; justify-content: space-between; padding: 0 12px; background: linear-gradient(90deg, #1a1a2e, #16213e); color: #fff; -webkit-app-region: drag; user-select: none; }
+.titlebar-left { display: flex; align-items: center; gap: 12px; }
+.app-logo { font-size: 22px; }
+.app-title { font-size: 14px; font-weight: 600; }
+.app-subtitle { font-size: 11px; color: #888; }
+.winctrls { display: flex; gap: 4px; -webkit-app-region: no-drag; }
+.winctrls button { background: transparent; border: none; color: #fff; font-size: 16px; padding: 6px 10px; border-radius: 4px; }
+.winctrls button:hover { background: rgba(255,255,255,0.1); }
+.winctrls button.close:hover { background: #e74c3c; }
+
+/* ── 侧边栏 ─────────────────────────────────────────── */
+.main { flex: 1; display: flex; overflow: hidden; }
+.sidebar { width: 200px; background: #16213e; padding: 12px; overflow-y: auto; flex-shrink: 0; }
+.sidebar-title { font-size: 11px; color: #888; margin: 12px 0 6px; text-transform: uppercase; }
+.nav-item { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 12px; margin: 2px 0; background: transparent; color: #e6e6f0; border: none; border-radius: 6px; text-align: left; font-size: 14px; }
+.nav-item:hover { background: rgba(255,255,255,0.08); }
+.nav-item.active { background: linear-gradient(90deg, #00ffc8, #a78bfa); color: #1a1a2e; font-weight: 600; }
+.nav-item .icon { font-size: 16px; }
+.platform-status-list { margin-bottom: 12px; }
+.platform-status-row { display: flex; align-items: center; gap: 8px; padding: 4px 0; font-size: 12px; color: #ccc; }
+.platform-dot { width: 8px; height: 8px; border-radius: 50%; background: #555; }
+.platform-dot.cookie { background: #00ffc8; box-shadow: 0 0 6px #00ffc8; }
+.platform-name-s { flex: 1; }
+
+/* ── 内容区 ─────────────────────────────────────────── */
+.content { flex: 1; display: flex; overflow: hidden; min-width: 0; }
+
+/* ── Toast 通知 ─────────────────────────────────────── */
+.toast-container { position: fixed; top: 60px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.toast { padding: 10px 16px; border-radius: 6px; background: #1a1a2e; color: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.3); animation: toast-in .25s ease; pointer-events: auto; max-width: 360px; font-size: 13px; }
+.toast-info { background: #1e1b4b; border: 1px solid #6c63ff; }
+.toast-success { background: #166534; border: 1px solid #4ade80; }
+.toast-warn { background: #f39c12; }
+.toast-error { background: #7f1d1d; border: 1px solid #f87171; }
+@keyframes toast-in { from { transform: translateX(20px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@keyframes toast-out { to { transform: translateX(20px); opacity: 0; } }
+
+/* ── 弹层 ───────────────────────────────────────────── */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.playlist-modal { z-index: 1001; }
+.overlay.hidden { display: none; }
+
+/* ── 按钮组件 ───────────────────────────────────────── */
+.btn { background: #00ffc8; color: #1a1a2e; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 600; }
+.btn:hover { filter: brightness(1.1); }
+.btn-sm { background: rgba(255,255,255,0.1); color: #fff; border: none; padding: 6px 12px; border-radius: 4px; font-size: 12px; }
+.btn-sm:hover { background: rgba(255,255,255,0.2); }
+
+/* ── 按钮可点击兜底 ─────────────────────────────────── */
+.nav-item, .titlebar button, .winctrls button, .btn, .btn-sm, .action-btn {
+  pointer-events: auto !important;
+  user-select: none;
+}

@@ -1,0 +1,966 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' data: http: https:; media-src 'self' data: blob: http: https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' 'ws:'; style-src 'self' 'unsafe-inline'; connect-src 'self' http: https: ws:; font-src 'self' data:;">
+<title>音乐下载器</title>
+<script>
+  // 全局错误捕获：onclick 调用未定义函数时弹 toast 而不是静默
+  window.addEventListener('error', (e) => {
+    if (typeof showToast === 'function') {
+      showToast('❌ JS 错误: ' + (e.message || e), 'error', 8000);
+    } else {
+      console.error('[global error]', e);
+    }
+  });
+  window.addEventListener('unhandledrejection', (e) => {
+    const msg = e.reason && (e.reason.message || e.reason) || '未知错误';
+    if (typeof showToast === 'function') {
+      showToast('❌ 异步错误: ' + msg, 'error', 8000);
+    }
+  });
+</script>
+<link rel="stylesheet" href="styles/base.css">
+<link rel="stylesheet" href="styles/layout.css">
+<link rel="stylesheet" href="styles/content.css">
+<link rel="stylesheet" href="styles/overlays.css">
+<link rel="stylesheet" href="styles/player.css">
+<!-- 霓虹 SVG 渐变：给环形进度条用 -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <linearGradient id="neonGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#00ffc8"/>
+      <stop offset="50%" stop-color="#a78bfa"/>
+      <stop offset="100%" stop-color="#00ffc8"/>
+    </linearGradient>
+  </defs>
+</svg>
+</head>
+<body>
+<div class="app">
+
+<!-- 标题栏 -->
+<div class="titlebar">
+  <div class="titlebar-left">
+    <div class="app-logo">🎵</div>
+    <div>
+      <div class="app-title">MusicDL</div>
+      <div class="app-subtitle">网易云 · QQ音乐 · 哔哩哔哩</div>
+    </div>
+  </div>
+  <div class="winctrls">
+    <button onclick="api.windowMinimize()" title="最小化" aria-label="最小化">─</button>
+    <button onclick="api.windowMaximize()" title="最大化" aria-label="最大化">□</button>
+    <button class="close" onclick="api.windowClose()" title="关闭" aria-label="关闭">✕</button>
+  </div>
+</div>
+
+<!-- 主体 -->
+<div class="main">
+
+  <!-- 侧边栏 -->
+  <div class="sidebar">
+    <div class="sidebar-title">导航</div>
+    <button class="nav-item active" data-tab="home" onclick="switchTab('home',this)">
+      <span class="icon">🏠</span> 首页
+    </button>
+    <button class="nav-item" data-tab="search" onclick="switchTab('search',this)">
+      <span class="icon">🔍</span> 搜索
+    </button>
+    <button class="nav-item" data-tab="download" onclick="switchTab('download',this)">
+      <span class="icon">⬇</span> 下载
+    </button>
+    <button class="nav-item" data-tab="local" onclick="switchTab('local',this)">
+      <span class="icon">📂</span> 本地歌曲
+    </button>
+    <button class="nav-item" data-tab="history" onclick="switchTab('history',this)">
+      <span class="icon">📜</span> 下载历史
+    </button>
+    <button class="nav-item" data-tab="ai-music" onclick="switchTab('ai-music',this)">
+      <span class="icon">🤖</span> AI 创作
+    </button>
+    <button class="nav-item" data-tab="converter" onclick="switchTab('converter',this)">
+      <span class="icon">🔄</span> 格式转换
+    </button>
+
+    <div class="sidebar-title">操作</div>
+    <button class="nav-item" onclick="api.openFolder(getState('saveDir'))">
+      <span class="icon">📥</span> 打开下载目录
+    </button>
+    <button class="nav-item" onclick="openSettings()">
+      <span class="icon">⚙️</span> 设置 / Cookie
+    </button>
+
+    <div class="save-dir">
+      <label>下载目录</label>
+      <div class="save-dir-path" id="saveDirText">加载中...</div>
+      <button class="btn-sm" onclick="changeSaveDir()">更改目录</button>
+    </div>
+  </div>
+
+  <!-- 内容区 -->
+  <div class="content">
+
+    <div class="content-main">
+
+    <!-- 首页 -->
+    <div id="homePage" style="display:flex;flex-direction:column;gap:16px;height:100%;overflow-y:auto;padding-right:4px;">
+      <!-- 欢迎横幅 -->
+      <div class="welcome-banner" style="margin-top:8px;">
+        <div class="welcome-title">🎵 发现好音乐，随时随地下载</div>
+        <div class="welcome-subtitle">支持网易云音乐、QQ音乐、哔哩哔哩三大平台，一键搜索下载，支持无损品质。</div>
+        <div class="welcome-platforms">
+          <div class="platform-chip"><span class="dot dot-netease"></span>网易云音乐</div>
+          <div class="platform-chip"><span class="dot dot-qq"></span>QQ 音乐</div>
+          <div class="platform-chip"><span class="dot dot-kg"></span>酷狗</div>
+          <div class="platform-chip"><span class="dot dot-bili"></span>哔哩哔哩</div>
+        </div>
+      </div>
+
+      <!-- 热门搜索 -->
+      <div class="hot-section">
+        <div class="hot-section-title">🔥 热门搜索</div>
+        <div class="hot-tags">
+          <span class="hot-tag trending" onclick="quickSearch('周杰伦')">周杰伦</span>
+          <span class="hot-tag trending" onclick="quickSearch('林俊杰')">林俊杰</span>
+          <span class="hot-tag trending" onclick="quickSearch('五月天')">五月天</span>
+          <span class="hot-tag trending" onclick="quickSearch('Taylor Swift')">Taylor Swift</span>
+          <span class="hot-tag" onclick="quickSearch('轻音乐')">轻音乐</span>
+          <span class="hot-tag" onclick="quickSearch('钢琴曲')">钢琴曲</span>
+          <span class="hot-tag" onclick="quickSearch('LoFi Hip Hop')">LoFi Hip Hop</span>
+          <span class="hot-tag" onclick="quickSearch('OST 原声带')">OST 原声带</span>
+          <span class="hot-tag" onclick="quickSearch('粤语经典')">粤语经典</span>
+          <span class="hot-tag" onclick="quickSearch('日语动漫')">日语动漫</span>
+        </div>
+      </div>
+
+      <!-- 最近播放 -->
+      <div class="hot-section" id="recentlyPlayedSection" style="display:none;">
+        <div class="hot-section-title">⏱️ 最近播放 <button class="section-clear-btn" onclick="clearRecentlyPlayed()">清空</button></div>
+        <div class="recent-list" id="recentlyPlayedList"></div>
+      </div>
+
+      <!-- 平台推荐 -->
+      <div class="recommend-section">
+        <div class="hot-section-title">🎵 平台推荐</div>
+
+        <!-- 平台切换标签 -->
+        <div class="platform-tabs">
+          <button class="plat-tab active" data-plat="netease" onclick="switchPlatTab('netease',this)"><span class="dot wy"></span>网易云</button>
+          <button class="plat-tab" data-plat="qq" onclick="switchPlatTab('qq',this)"><span class="dot qq"></span>QQ音乐</button>
+          <button class="plat-tab" data-plat="bilibili" onclick="switchPlatTab('bilibili',this)"><span class="dot bi"></span>B站</button>
+        </div>
+
+
+
+        <!-- 网易云面板 -->
+        <div class="plat-panel" id="platNeteasePanel">
+          <div class="rec-subtabs" id="neteaseSubTabs">
+            <button class="rec-subtab active" data-type="tops" onclick="switchNeteaseSub('tops',this)">飙升榜</button>
+            <button class="rec-subtab" data-type="hot" onclick="switchNeteaseSub('hot',this)">热歌榜</button>
+            <button class="rec-subtab" data-type="new" onclick="switchNeteaseSub('new',this)">新歌榜</button>
+            <button class="rec-subtab" data-type="original" onclick="switchNeteaseSub('original',this)">原创榜</button>
+            <button class="rec-subtab" data-type="playlists" onclick="switchNeteaseSub('playlists',this)">推荐歌单</button>
+          </div>
+          <div id="neteaseTopsPanel">
+            <div class="top-songs-list" id="neteaseTopsList"><div class="loading"><div class="spinner"></div> 加载中...</div></div>
+          </div>
+          <div id="neteaseHotPanel" style="display:none;">
+            <div class="top-songs-list" id="neteaseHotList"><div class="loading"><div class="spinner"></div> 加载中...</div></div>
+          </div>
+          <div id="neteaseNewPanel" style="display:none;">
+            <div class="top-songs-list" id="neteaseNewList"><div class="loading"><div class="spinner"></div> 加载中...</div></div>
+          </div>
+          <div id="neteaseOriginalPanel" style="display:none;">
+            <div class="top-songs-list" id="neteaseOriginalList"><div class="loading"><div class="spinner"></div> 加载中...</div></div>
+          </div>
+          <div id="neteasePlaylistPanel" style="display:none;">
+            <div class="playlist-grid" id="neteasePlaylistGrid"><div class="loading" style="grid-column:1/-1"><div class="spinner"></div> 加载中...</div></div>
+          </div>
+        </div>
+
+        <!-- QQ音乐面板 -->
+        <div class="plat-panel hidden" id="platQQPanel">
+          <div class="rank-block-title">📀 QQ音乐 · 个性化推荐</div>
+          <div class="playlist-grid" id="qqRecommendGrid"><div class="loading" style="grid-column:1/-1"><div class="spinner"></div> 加载中...</div></div>
+
+          <div class="rank-block-title">🎵 QQ音乐 · 官方歌单</div>
+          <div class="playlist-grid" id="qqOfficialGrid"><div class="loading" style="grid-column:1/-1"><div class="spinner"></div> 加载中...</div></div>
+
+          <div class="rank-block-title">💿 QQ音乐 · 经典歌单</div>
+          <div class="playlist-grid" id="qqClassicGrid"><div class="loading" style="grid-column:1/-1"><div class="spinner"></div> 加载中...</div></div>
+
+          <div class="rank-block-title">💕 QQ音乐 · 情歌歌单</div>
+          <div class="playlist-grid" id="qqLoveGrid"><div class="loading" style="grid-column:1/-1"><div class="spinner"></div> 加载中...</div></div>
+
+          <div class="rank-block-title">🎤 QQ音乐 · KTV热歌</div>
+          <div class="playlist-grid" id="qqKTVGrid"><div class="loading" style="grid-column:1/-1"><div class="spinner"></div> 加载中...</div></div>
+
+          <div class="rank-block-title">🔥 QQ音乐 · 热歌榜</div>
+          <div class="top-songs-list" id="qqTopList"><div class="loading"><div class="spinner"></div> 加载中...</div></div>
+
+          <div class="rank-block-title">🆕 QQ音乐 · 内地新歌</div>
+          <div class="top-songs-list" id="qqNewSongsList"><div class="loading"><div class="spinner"></div> 加载中...</div></div>
+
+          <div class="rank-block-title">📻 QQ音乐 · 热门电台</div>
+          <div class="playlist-grid" id="qqRadiosGrid"><div class="loading" style="grid-column:1/-1"><div class="spinner"></div> 加载中...</div></div>
+
+          <div class="rank-block-title">🎤 QQ音乐 · 热门歌手</div>
+          <div class="playlist-grid" id="qqHotSingersGrid"><div class="loading" style="grid-column:1/-1"><div class="spinner"></div> 加载中...</div></div>
+        </div>
+
+        <!-- B站面板 -->
+        <div class="plat-panel hidden" id="platBiliPanel">
+          <div class="rank-block-title">📺 B站 · 音乐区热门排行</div>
+          <div class="top-songs-list" id="biliRankingList"><div class="loading"><div class="spinner"></div> 加载中...</div></div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- 搜索页面 -->
+        <div id="searchPage" style="display:none;flex-direction:column;gap:16px;height:100%;">
+
+          <!-- 搜索栏 -->
+          <div class="search-bar" style="position:relative;">
+            <div class="search-source-tabs">
+              <button class="tab active" data-src="all" onclick="switchSource('all',this)">全部</button>
+              <button class="tab" data-src="netease" onclick="switchSource('netease',this)">网易云</button>
+              <button class="tab" data-src="qq" onclick="switchSource('qq',this)">QQ音乐</button>
+              <button class="tab" data-src="kugou" onclick="switchSource('kugou',this)">酷狗</button>
+              <button class="tab" data-src="bilibili" onclick="switchSource('bilibili',this)">B站</button>
+            </div>
+            <div class="search-type-tabs">
+                          <button class="tab active" data-type="song" onclick="switchSearchType('song',this)">🎵 单曲</button>
+                          <button class="tab" data-type="album" onclick="switchSearchType('album',this)">💿 专辑</button>
+                          <button class="tab" data-type="singer" onclick="switchSearchType('singer',this)">🎤 歌手</button>
+                        </div>
+                        <div class="search-input-wrap">
+              <input class="search-input" id="searchInput" placeholder="搜索歌曲、歌手、专辑..."
+                onkeydown="if(event.key==='Enter')doSearch()" oninput="debounceSearch()" onfocus="showSearchHistory()" onblur="hideSearchHistory()">
+              <button class="search-btn" onclick="doSearch()">🔍</button>
+            </div>
+            <select class="quality-select" id="qualitySelect">
+              <option value="standard">标准 128k</option>
+              <option value="hq">高品质 320k</option>
+              <option value="lossless">无损 FLAC</option>
+            </select>
+            <!-- 搜索历史下拉 -->
+            <div class="search-history" id="searchHistory" style="display:none;"></div>
+                      </div>
+
+                      <!-- 批量操作工具栏 -->
+                      <div class="batch-toolbar" id="batchToolbar" style="display:none;">
+            <label class="batch-check-label">
+              <input type="checkbox" id="selectAllSongs" onchange="toggleSelectAllSongs(this.checked)">
+              <span>全选</span>
+            </label>
+            <span class="batch-info" id="batchInfo">已选 0 首</span>
+            <button class="batch-btn" onclick="batchDownload()">⬇ 批量下载</button>
+            <button class="batch-btn" onclick="batchPlay()">▶ 批量播放</button>
+            <button class="batch-btn" onclick="clearSearchHistory()" title="清除搜索历史" style="margin-left:auto;">🗑 历史</button>
+          </div>
+
+          <!-- 结果区 -->
+          <div class="results-area">
+
+            <!-- 歌曲列表 -->
+            <div style="flex:1;display:flex;flex-direction:column;gap:8px;overflow:hidden;">
+              <div class="song-list" id="songList">
+                <div class="empty-state" id="welcomeScreen">
+                  <div class="empty-icon">🎵</div>
+                  <div class="empty-text">输入关键词开始搜索</div>
+                  <div class="empty-hint">支持歌名、歌手、专辑，三大平台同时检索</div>
+                </div>
+              </div>
+              <div class="pagination" id="pagination" style="display:none;"></div>
+            </div>
+
+          </div>
+                  </div>
+                  <!-- /搜索页面 -->
+
+                  <!-- 本地库页面 -->
+              <div id="localPage" class="local-page">
+          <div class="local-toolbar">
+                      <button class="tab" onclick="scanLocalDir()">📂 扫描目录</button>
+                      <button class="tab tab-neon" onclick="batchAutoMeta()" style="background:linear-gradient(135deg,var(--neon-cyan),var(--neon-blue));color:#fff;border:none;">⚡ 一键补全</button>
+                      <button class="tab tab-neon" onclick="batchFetchCovers()">🖼️ 批量补封面</button>
+                      <button class="tab tab-neon" id="localSelectBtn" onclick="enterLocalSelectionMode()">☑ 选择</button>
+            <button class="tab tab-neon" id="localViewToggleBtn" onclick="toggleLocalView()">▦ 网格</button>
+            <button class="tab tab-neon" onclick="batchFetchLyrics()">🎵 批量补歌词</button>
+                      <button class="tab" onclick="showLibraryStats()">📊 统计</button>
+                      <button class="tab" onclick="detectDuplicateSongs()">🔍 查重</button>
+                      <button class="tab tab-neon" onclick="convertSelectedAudio()">🔄 转码</button>
+                      <div class="search-input-wrap">
+                        <input class="search-input" id="localFilter" placeholder="过滤本地歌曲..."
+                          oninput="filterLocalSongs()" onkeydown="if(event.key==='Enter')filterLocalSongs()">
+                      </div>
+                      <span class="local-info" id="localInfo">未扫描</span>
+                    </div>
+                    <!-- 批量选择操作栏 -->
+                    <div id="localSelectionBar" class="local-selection-bar" style="display:none">
+                      <span class="local-sel-count">已选 <b id="localSelectionCount">0</b> 首</span>
+                      <button class="tab" onclick="selectAllLocal()">全选</button>
+                      <button class="tab" onclick="deselectAllLocal()">取消全选</button>
+                      <div style="flex:1"></div>
+                      <button class="tab tab-neon" onclick="openBatchEdit()">✏️ 批量编辑</button>
+                      <button class="tab tab-neon" onclick="openBatchRename()">📝 批量重命名</button>
+                      <button class="tab" onclick="exitLocalSelectionMode()">完成</button>
+                    </div>
+          <div id="batchProgressWrap" class="batch-progress-wrap" style="display:none">
+            <div id="batchProgressLabel" class="batch-progress-label">正在补全封面...</div>
+            <div id="batchProgressBar" class="batch-progress-bar"></div>
+            <button class="tab" onclick="cancelBatchFetch()" style="flex-shrink:0;padding:3px 10px;font-size:11px">取消</button>
+          </div>
+          <div class="local-list" id="localList"></div>
+                    <div class="local-grid" id="localGrid" style="display:none"></div>
+                  </div>
+
+    <!-- 下载页面 -->
+        <div id="downloadPage" class="download-page" style="display:none;flex-direction:column;gap:12px;padding:4px 0;height:100%;min-height:0;overflow:hidden;">
+          <div class="download-header" style="display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;">
+            <div style="font-size:16px;font-weight:600;">⬇ 下载队列</div>
+            <span class="panel-badge" id="queueBadge">0</span>
+            <!-- 状态筛选标签 -->
+            <div class="filter-tabs" id="downloadFilterTabs">
+              <button class="filter-tab active" onclick="setDownloadFilter('all')">全部</button>
+              <button class="filter-tab" onclick="setDownloadFilter('active')">下载中</button>
+              <button class="filter-tab" onclick="setDownloadFilter('done')">已完成</button>
+              <button class="filter-tab" onclick="setDownloadFilter('error')">失败</button>
+            </div>
+            <div style="flex:1"></div>
+            <button class="tab tab-neon" id="dlSelectBtn" onclick="enterDlSelectionMode()">☑ 选择</button>
+            <button class="tab" onclick="clearFinishedDownloads()">🗑 清空已完成</button>
+            <button class="tab" onclick="clearAllDownloads()">🗑 清空全部</button>
+            <button class="tab" onclick="openSaveDir()">📂 打开目录</button>
+            <button class="tab tab-neon" onclick="exportCurrentPlaylist()">📤 导出列表</button>
+          </div>
+          <!-- 选择操作栏 -->
+          <div id="dlSelectionBar" class="dl-selection-bar" style="display:none">
+            <span class="dl-sel-count">已选 <b id="dlSelectionCount">0</b> 项</span>
+            <button class="tab" onclick="selectAllDl()">全选</button>
+            <button class="tab" onclick="deselectAllDl()">取消全选</button>
+            <div style="flex:1"></div>
+            <button class="tab" onclick="batchRetryDl()">🔄 批量重试</button>
+            <button class="tab" onclick="batchRemoveDl()">🗑 批量删除</button>
+            <button class="tab" onclick="exitDlSelectionMode()">完成</button>
+          </div>
+          <div id="queueList" class="queue-list" style="flex:1 1 0;overflow-y:auto;min-height:0;max-height:none;">
+            <div class="queue-empty">暂无下载任务</div>
+          </div>
+        </div>
+
+    <!-- 下载历史页面 -->
+    <div id="historyPage" style="display:none;flex-direction:column;gap:12px;height:100%;">
+      <div class="history-header" style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
+        <div style="font-size:16px;font-weight:600;">📜 下载历史</div>
+        <div class="search-input-wrap" style="max-width:250px;">
+          <input class="search-input" id="historyFilter" placeholder="搜索历史..."
+            oninput="filterHistory()" onkeydown="if(event.key==='Enter')filterHistory()">
+        </div>
+        <span class="panel-badge" id="historyInfo">加载中...</span>
+        <div style="flex:1"></div>
+        <button class="tab" onclick="clearAllHistory()">🗑 清空历史</button>
+      </div>
+      <div id="historyList" class="history-list" style="flex:1;overflow-y:auto;">
+        <div class="loading"><div class="spinner"></div> 加载中...</div>
+      </div>
+      <div class="history-pagination" id="historyPagination" style="display:flex;gap:8px;flex-shrink:0;">
+        <button class="page-btn" onclick="historyPrevPage()">上一页</button>
+        <button class="page-btn" onclick="historyNextPage()">下一页</button>
+      </div>
+    </div>
+
+    <!-- AI 音乐页面 -->
+    <div id="aiMusicPage" style="display:none;flex-direction:column;height:100%;padding:16px;">
+      <div class="ai-header">
+        <div class="ai-title">🤖 AI 音乐创作</div>
+        <div class="ai-tabs">
+          <button class="ai-tab active" data-tab="create" onclick="switchAiTab('create')">✨ 创作</button>
+          <button class="ai-tab" data-tab="history" onclick="switchAiTab('history')">📜 历史</button>
+        </div>
+      </div>
+      <div id="aiMusicContent" class="ai-content"></div>
+    </div>
+
+    <!-- 格式转换页面 -->
+    <div id="converterPage" style="display:none;flex-direction:column;gap:12px;height:100%;overflow-y:auto;padding:16px;">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <span style="font-size:24px;">🔄</span>
+        <div>
+          <div style="font-size:18px;font-weight:600;">音频格式转换</div>
+          <div style="font-size:12px;color:var(--neon-dim);">搜索本地歌曲，一键批量转换格式</div>
+        </div>
+      </div>
+
+      <!-- 搜索栏 + 扫描按钮 -->
+      <div style="display:flex;gap:10px;align-items:center;">
+        <input type="text" id="converterSearch" placeholder="🔍 搜索歌曲..." style="flex:1;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;">
+        <button onclick="window._converterScan()" style="background:var(--neon-blue);border:none;border-radius:8px;padding:10px 16px;color:#fff;font-size:13px;cursor:pointer;white-space:nowrap;">📂 扫描</button>
+        <button onclick="window._converterSearch()" style="background:var(--neon-cyan);border:none;border-radius:8px;padding:10px 16px;color:#000;font-size:13px;cursor:pointer;white-space:nowrap;">🔍 搜索</button>
+        <button onclick="window._converterAddQueue()" style="background:var(--neon-blue);border:none;border-radius:8px;padding:10px 16px;color:#fff;font-size:13px;cursor:pointer;white-space:nowrap;">+ 添加</button>
+      </div>
+
+      <!-- 歌曲列表 + 转换队列并排布局 -->
+      <div style="display:flex;gap:12px;flex:1;min-height:0;">
+        <!-- 左侧：歌曲列表 -->
+        <div style="flex:1;display:flex;flex-direction:column;gap:8px;min-width:0;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span id="converterInfo" style="font-size:12px;color:var(--neon-dim);">加载中...</span>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--neon-dim);cursor:pointer;">
+              <input type="checkbox" id="converterSelectAll" style="accent-color:var(--neon-cyan);"> 全选
+            </label>
+          </div>
+          <div id="converterSongList" style="flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:4px;"></div>
+        </div>
+
+        <!-- 右侧：转换队列 -->
+        <div style="width:320px;display:flex;flex-direction:column;gap:8px;">
+          <div style="font-size:13px;font-weight:600;">转换队列</div>
+          <div id="converterQueue" style="flex:1;overflow-y:auto;min-height:120px;border:1px solid var(--border);border-radius:8px;padding:8px;"></div>
+
+          <!-- 批量设置 -->
+          <div id="converterActions" style="display:none;flex-direction:column;gap:8px;padding:10px;background:var(--bg-secondary);border-radius:8px;">
+            <!-- 输出目录 -->
+            <div style="display:flex;gap:6px;align-items:center;">
+              <span id="converterOutputDir" style="flex:1;font-size:11px;color:var(--neon-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">未设置输出目录</span>
+              <button onclick="window._converterSelectOutputDir()" style="background:var(--neon-blue);border:none;border-radius:4px;padding:4px 8px;color:#fff;font-size:10px;cursor:pointer;white-space:nowrap;">选择</button>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <select id="converterBatchFormat" style="flex:1;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:6px;color:var(--text);font-size:12px;">
+                <option value="mp3">MP3</option>
+                <option value="flac">FLAC</option>
+                <option value="aac">AAC</option>
+                <option value="ogg">OGG</option>
+              </select>
+              <select id="converterBatchBitrate" style="flex:1;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:6px;color:var(--text);font-size:12px;">
+                <option value="128k">128k</option>
+                <option value="192k">192k</option>
+                <option value="256k">256k</option>
+                <option value="320k">320k</option>
+              </select>
+              <button onclick="window._converterApplyBatch()" style="background:var(--neon-blue);border:none;border-radius:6px;padding:6px 10px;color:#fff;font-size:11px;cursor:pointer;">应用</button>
+            </div>
+            <div style="display:flex;gap:6px;">
+              <button onclick="clearDone()" style="flex:1;background:transparent;border:1px solid var(--border);border-radius:6px;padding:6px;color:var(--text);font-size:11px;cursor:pointer;">清空已完成</button>
+              <button id="converterStartBtn" onclick="window._converterStart()" style="flex:1;background:var(--neon-cyan);border:none;border-radius:6px;padding:8px;color:#000;font-size:13px;font-weight:600;cursor:pointer;">开始转换</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    </div><!-- /content-main -->
+  </div><!-- /content -->
+
+  <!-- 右侧播放器 -->
+  <div class="side-panel">
+    <div class="player-card" id="playerCard">
+      <div class="player-deco-line"></div>
+
+      <div class="player-disc-wrap" id="playerDiscWrap">
+        <div class="player-disc-glow" id="playerDiscGlow"></div>
+        <svg class="player-ring-svg" viewBox="0 0 200 200">
+          <circle class="ring-track" cx="100" cy="100" r="88"/>
+          <circle class="ring-fill" id="ringFill" cx="100" cy="100" r="88"
+            stroke-dasharray="552.9" stroke-dashoffset="552.9"/>
+        </svg>
+        <div class="player-disc-inner" id="playerDiscInner">
+          <div class="player-disc-ph" id="playerDiscPh">🎵</div>
+          <img class="player-disc-img" id="playerDiscImg" style="display:none;" alt="">
+        </div>
+      </div>
+
+      <div class="player-song-info">
+        <div class="player-title" id="playerTitle">未在播放</div>
+        <div class="player-artist" id="playerArtist">—</div>
+      </div>
+
+      <div class="player-progress-wrap">
+        <div class="player-time" id="timeNow">0:00</div>
+        <div class="player-progress-track" id="playerProgressBar" onclick="seekAudio(event)">
+          <div class="player-progress-fill" id="playerProgressFill"></div>
+          <div class="player-progress-thumb" id="playerProgressThumb"></div>
+        </div>
+        <div class="player-time" id="timeTotal">0:00</div>
+      </div>
+
+      <div class="player-controls">
+        <button class="ctrl-btn" id="btnPlayMode" title="播放模式" onclick="cyclePlayMode()">
+          <svg id="btnPlayModeIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/></svg>
+        </button>
+        <button class="ctrl-btn" onclick="prevSong()" title="上一首">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+        </button>
+        <button class="ctrl-btn play-btn" id="btnPlay" onclick="togglePlay()">
+          <svg id="btnPlayIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+        </button>
+        <button class="ctrl-btn" onclick="nextSong()" title="下一首">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+        </button>
+        <button class="ctrl-btn" id="btnCoverAnim" title="切换封面动画" onclick="cycleCoverAnimation()" style="font-size:12px;">💿</button>
+        <button class="ctrl-btn" id="btnMiniPlayer" title="迷你播放器" onclick="api.openMiniPlayer()" style="font-size:13px;">⧉</button>
+      </div>
+
+      <div class="lyrics-area" id="lyricsArea" style="display:none;"></div>
+      <div class="player-deco-line-bottom"></div>
+    </div>
+  </div>
+
+  </div>
+
+<!-- ID3 编辑弹窗 -->
+<div class="edit-overlay hidden" id="editOverlay" onclick="closeEditOnBg(event)">
+  <div class="edit-panel">
+    <div class="edit-header">
+      <span class="edit-title" id="editTitleLabel">✏️ 编辑歌曲信息</span>
+      <button class="edit-close" onclick="closeEdit()">✕</button>
+    </div>
+    <div id="editBatchHint" class="edit-batch-hint" style="display:none"></div>
+    <div class="edit-body">
+      <div class="edit-cover-area">
+        <div class="edit-cover-preview" id="editCoverPreview"><span style="font-size:28px">🎵</span></div>
+        <div class="edit-cover-actions">
+          <div class="edit-cover-hint">支持拖拽图片到此处，或点击选择文件替换封面</div>
+          <input type="file" id="editCoverInput" accept="image/*" style="display:none" onchange="onEditCoverSelect(event)">
+          <button class="btn-sm" onclick="document.getElementById('editCoverInput').click()">选择封面</button>
+          <button class="btn-sm" onclick="clearEditCover()">清除封面</button>
+        </div>
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">歌曲标题</label>
+        <input class="edit-input" id="editTitle" placeholder="歌曲标题">
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">艺术家</label>
+        <input class="edit-input" id="editArtist" placeholder="艺术家">
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">专辑</label>
+        <input class="edit-input" id="editAlbum" placeholder="专辑">
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">年份</label>
+        <input class="edit-input" id="editYear" placeholder="年份">
+      </div>
+      <div class="edit-field">
+        <label class="edit-label">流派</label>
+        <input class="edit-input" id="editGenre" placeholder="流派">
+      </div>
+    </div>
+    <div class="edit-footer">
+      <button class="edit-btn-cancel" onclick="closeEdit()">取消</button>
+      <button class="edit-btn-save" id="editSaveBtn" onclick="saveEdit()">保存更改</button>
+    </div>
+  </div>
+</div>
+
+<!-- 设置面板 -->
+<div class="settings-overlay hidden" id="settingsOverlay" onclick="closeSettingsOnBg(event)">
+  <div class="settings-panel" id="settingsPanel">
+    <div class="settings-header">
+      <span class="settings-title">⚙️ 设置</span>
+      <button class="settings-close" onclick="closeSettings()">✕</button>
+    </div>
+
+    <div class="settings-body">
+      <!-- 左侧导航 -->
+      <nav class="settings-nav">
+        <button class="settings-nav-item active" data-tab="accounts" onclick="switchSettingsTab('accounts', this)">
+          <span class="nav-emoji">🔐</span><span>账号</span>
+        </button>
+        <button class="settings-nav-item" data-tab="general" onclick="switchSettingsTab('general', this)">
+          <span class="nav-emoji">⚙️</span><span>通用</span>
+        </button>
+        <button class="settings-nav-item" data-tab="about" onclick="switchSettingsTab('about', this)">
+          <span class="nav-emoji">ℹ️</span><span>关于</span>
+        </button>
+      </nav>
+
+      <div class="settings-content">
+        <!-- 账号页 -->
+        <div class="settings-page" id="settingsPageAccounts">
+          <div class="settings-section-title">🍪 平台账号（解锁 VIP / 高品质下载）</div>
+          <div class="accounts-grid">
+            <!-- 网易云 -->
+            <div class="account-card" data-platform="netease">
+              <div class="account-head">
+                <span class="account-icon">🎵</span>
+                <div class="account-info">
+                  <div class="account-name">网易云音乐</div>
+                  <div class="account-status" id="neteaseStatusText">未登录</div>
+                </div>
+                <span class="account-dot" id="neteaseDot"></span>
+              </div>
+              <button class="account-primary-btn" id="neteaseLoginBtn" onclick="openLoginWindowUI('netease', this)">
+                🔑 一键登录
+              </button>
+              <details class="account-advanced">
+                <summary>高级（手动粘贴 Cookie）</summary>
+                <div class="settings-hint-box" style="margin:8px 0">
+                  在浏览器登录后 → F12 → Network → 复制请求头 <code>Cookie:</code> 字段
+                </div>
+                <textarea class="cookie-textarea" id="neteaseCookie" placeholder="MUSIC_U=xxxx; __csrf=xxxx; ..."></textarea>
+                <div class="cookie-actions">
+                  <button class="cookie-btn-save" onclick="saveCookie('netease')">保存</button>
+                  <button class="cookie-btn-verify" onclick="verifyCookieUI('netease')">验证</button>
+                  <button class="cookie-btn-verify" onclick="analyzeCookieUI('netease')">🔍 分析</button>
+                  <button class="cookie-btn-clear" onclick="clearCookie('netease')">清除</button>
+                </div>
+                <div class="cookie-verify-result" id="neteaseVerifyResult"></div>
+                <div class="cookie-analyze" id="neteaseAnalyze"></div>
+              </details>
+            </div>
+
+            <!-- QQ -->
+            <div class="account-card" data-platform="qq">
+              <div class="account-head">
+                <span class="account-icon">🎶</span>
+                <div class="account-info">
+                  <div class="account-name">QQ 音乐</div>
+                  <div class="account-status" id="qqStatusText">未登录</div>
+                </div>
+                <span class="account-dot" id="qqDot"></span>
+              </div>
+              <button class="account-primary-btn" id="qqLoginBtn" onclick="openLoginWindowUI('qq', this)">
+                🔑 一键登录
+              </button>
+              <details class="account-advanced">
+                <summary>高级（手动粘贴 Cookie）</summary>
+                <div class="settings-hint-box" style="margin:8px 0">
+                  需含 <code>uin=</code> 字段，否则无法识别
+                </div>
+                <textarea class="cookie-textarea" id="qqCookie" placeholder="uin=xxxx; qm_keyst=xxxx; ..."></textarea>
+                <div class="cookie-actions">
+                  <button class="cookie-btn-save" onclick="saveCookie('qq')">保存</button>
+                  <button class="cookie-btn-verify" onclick="verifyCookieUI('qq')">验证</button>
+                  <button class="cookie-btn-verify" onclick="analyzeCookieUI('qq')">🔍 分析</button>
+                  <button class="cookie-btn-clear" onclick="clearCookie('qq')">清除</button>
+                </div>
+                <div class="cookie-verify-result" id="qqVerifyResult"></div>
+                <div class="cookie-analyze" id="qqAnalyze"></div>
+              </details>
+            </div>
+
+            <!-- B 站 -->
+            <div class="account-card" data-platform="bilibili">
+              <div class="account-head">
+                <span class="account-icon">📺</span>
+                <div class="account-info">
+                  <div class="account-name">哔哩哔哩</div>
+                  <div class="account-status" id="bilibiliStatusText">未登录</div>
+                </div>
+                <span class="account-dot" id="bilibiliDot"></span>
+              </div>
+              <button class="account-primary-btn" id="bilibiliLoginBtn" onclick="openLoginWindowUI('bilibili', this)">
+                🔑 一键登录
+              </button>
+              <details class="account-advanced">
+                <summary>高级（手动粘贴 Cookie）</summary>
+                <div class="settings-hint-box" style="margin:8px 0">
+                  需含 <code>SESSDATA=</code> 字段
+                </div>
+                <textarea class="cookie-textarea" id="bilibiliCookie" placeholder="SESSDATA=xxxx; bili_jct=xxxx; ..."></textarea>
+                <div class="cookie-actions">
+                  <button class="cookie-btn-save" onclick="saveCookie('bilibili')">保存</button>
+                  <button class="cookie-btn-verify" onclick="verifyCookieUI('bilibili')">验证</button>
+                  <button class="cookie-btn-verify" onclick="analyzeCookieUI('bilibili')">🔍 分析</button>
+                  <button class="cookie-btn-clear" onclick="clearCookie('bilibili')">清除</button>
+                </div>
+                <div class="cookie-verify-result" id="bilibiliVerifyResult"></div>
+                <div class="cookie-analyze" id="bilibiliAnalyze"></div>
+              </details>
+            </div>
+          </div>
+        </div>
+
+        <!-- 通用页 -->
+        <div class="settings-page hidden" id="settingsPageGeneral">
+          <div class="settings-section-title">⚙️ 下载设置</div>
+
+          <div class="setting-row">
+            <label class="setting-label">默认音质</label>
+            <select class="setting-select" id="settingQuality">
+              <option value="standard">标准 128k</option>
+              <option value="hq">高品质 320k</option>
+              <option value="lossless">无损 FLAC</option>
+            </select>
+            <span class="setting-hint">搜索和下载时的默认音质</span>
+          </div>
+
+          <div class="setting-row">
+            <label class="setting-label">最大并发下载数</label>
+            <input class="setting-input" id="settingConcurrency" type="number" min="1" max="10" value="3">
+            <span class="setting-hint">同时下载的任务数量（1~10）</span>
+          </div>
+
+          <div class="setting-row">
+            <label class="setting-label">文件名模板</label>
+            <input class="setting-input" id="settingFilenameTmpl" value="{artist} - {title}">
+            <span class="setting-hint">支持 {artist} {title} {album} {source}</span>
+          </div>
+
+          <div class="settings-section-title" style="margin-top:20px">🎵 元数据</div>
+
+          <div class="setting-row">
+            <label class="setting-label">
+              <input type="checkbox" id="settingAutoLyric" checked>
+              自动下载并嵌入歌词
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <label class="setting-label">
+              <input type="checkbox" id="settingAutoCover" checked>
+              自动下载并嵌入封面
+            </label>
+          </div>
+
+          <div class="setting-row">
+            <label class="setting-label">
+              <input type="checkbox" id="settingNotifications" checked>
+              下载完成时显示通知
+            </label>
+          </div>
+
+          <div class="settings-section-title" style="margin-top:20px">📂 下载路径模板</div>
+
+          <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
+            <div style="display:flex;gap:6px;align-items:center;width:100%;">
+              <button class="setting-btn" onclick="openDlTemplateEditor(null)" style="flex:1;">➕ 新建模板</button>
+              <button class="setting-btn" onclick="loadDownloadTemplates()" style="flex:1;">🔄 刷新</button>
+            </div>
+            <div id="dlTemplateList" style="width:100%;display:flex;flex-direction:column;gap:4px;"></div>
+          </div>
+
+          <div class="settings-section-title" style="margin-top:20px">🎨 外观</div>
+
+          <div class="setting-row">
+            <label class="setting-label">主题</label>
+            <select class="setting-select" id="settingTheme">
+              <option value="default">默认暗色</option>
+              <option value="light">☀️ 浅色</option>
+              <option value="cyber">Cyber 赛博</option>
+              <option value="aurora">Aurora 极光</option>
+              <option value="sunset">Sunset 日落</option>
+              <option value="forest">Forest 森林</option>
+            </select>
+          </div>
+
+          <div class="settings-section-title" style="margin-top:20px">🎚️ 均衡器 EQ</div>
+
+          <div id="eqPanel" style="display:flex;flex-direction:column;gap:8px;padding:8px 0;">
+            <!-- EQ 预设按钮行 -->
+            <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;">
+              <button class="eq-preset-btn eq-preset-active" data-eq-preset="flat" onclick="applyEqPreset('flat')" style="font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);cursor:pointer;">🔄 默认</button>
+              <button class="eq-preset-btn" data-eq-preset="pop" onclick="applyEqPreset('pop')" style="font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);cursor:pointer;">🔥 流行</button>
+              <button class="eq-preset-btn" data-eq-preset="rock" onclick="applyEqPreset('rock')" style="font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);cursor:pointer;">🎸 摇滚</button>
+              <button class="eq-preset-btn" data-eq-preset="classic" onclick="applyEqPreset('classic')" style="font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);cursor:pointer;">🎻 古典</button>
+              <button class="eq-preset-btn" data-eq-preset="vocal" onclick="applyEqPreset('vocal')" style="font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);cursor:pointer;">🎤 人声</button>
+              <button class="eq-preset-btn" data-eq-preset="dance" onclick="applyEqPreset('dance')" style="font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);cursor:pointer;">💃 舞曲</button>
+              <button class="eq-preset-btn" data-eq-preset="jazz" onclick="applyEqPreset('jazz')" style="font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);cursor:pointer;">🎷 爵士</button>
+              <button class="eq-preset-btn" data-eq-preset="bass" onclick="applyEqPreset('bass')" style="font-size:11px;padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--bg-input);color:var(--text);cursor:pointer;">🔊 重低音</button>
+            </div>
+            <!-- 5 段 EQ 滑块 -->
+            <div id="eqSliderContainer"></div>
+            <!-- 操作行 -->
+            <div style="display:flex;justify-content:space-between;margin-top:4px;">
+              <button id="eqBypassBtn" class="setting-btn" onclick="toggleEqBypass()" style="font-size:12px;padding:4px 12px;">🎚️ EQ开启</button>
+              <button class="setting-btn" onclick="resetEq()" style="font-size:12px;padding:4px 12px;">重置 EQ</button>
+            </div>
+          </div>
+          <script>
+          (function buildEqUI() {
+            const container = document.getElementById('eqSliderContainer');
+            if (!container) return;
+            const bands = [
+              { freq: '60Hz', label: '低音' },
+              { freq: '230Hz', label: '中低' },
+              { freq: '910Hz', label: '中音' },
+              { freq: '3.6kHz', label: '中高' },
+              { freq: '14kHz', label: '高音' },
+            ];
+            bands.forEach((b, i) => {
+              const row = document.createElement('div');
+              row.style.cssText = 'display:flex;align-items:center;gap:8px;';
+              row.innerHTML = `
+                <span style="width:48px;font-size:11px;color:var(--text-dim);text-align:right;">${b.freq}</span>
+                <input type="range" id="eq_${i}" min="-12" max="12" value="0" step="1"
+                  style="flex:1;accent-color:var(--neon-cyan);"
+                  oninput="setEqBand(${i}, +this.value); document.getElementById('eq_val_${i}').textContent = this.value + 'dB';"
+                  onchange="saveEqSettings()">
+                <span id="eq_val_${i}" style="width:42px;font-size:11px;color:var(--text-dim);">0dB</span>
+              `;
+              container.appendChild(row);
+            });
+          })();
+          </script>
+
+          <div class="settings-section-title" style="margin-top:20px">🗑️ 缓存管理</div>
+
+          <div class="setting-row">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <button class="setting-btn" onclick="clearPlayCache()">🧹 清理播放缓存</button>
+              <span id="cacheSizeLabel" style="font-size:12px;color:var(--text-muted)"></span>
+            </div>
+            <span class="setting-hint">清除试听产生的临时文件，不会影响已下载的音乐</span>
+          </div>
+
+          <div class="settings-section-title" style="margin-top:20px">📊 播放统计</div>
+
+          <div class="setting-row">
+            <div style="display:flex;align-items:center;gap:12px;">
+              <button class="setting-btn" onclick="generatePlayReport()">📊 查看听歌报告</button>
+              <button class="setting-btn" onclick="resetPlayStats()" style="border-color:var(--red);color:var(--red);">🗑 重置统计</button>
+            </div>
+            <span class="setting-hint">查看播放统计和听歌报告</span>
+          </div>
+
+          <div class="settings-section-title" style="margin-top:20px">🔄 重置设置</div>
+          <div class="setting-row">
+            <button class="setting-btn" onclick="resetAllSettings()" style="border-color:var(--red);color:var(--red);">
+              ⚠️ 恢复所有默认设置
+            </button>
+            <span class="setting-hint">将所有设置恢复为出厂默认值（不会删除已下载的音乐和 Cookie）</span>
+          </div>
+
+        </div>
+
+        <!-- 关于页 -->
+        <div class="settings-page hidden" id="settingsPageAbout">
+          <div class="settings-section-title">ℹ️ 关于 MusicDL</div>
+          <div class="settings-hint-box" style="line-height:2;">
+            <strong>MusicDL</strong> · v1.0.0<br>
+            多平台音乐下载桌面应用 · Electron 28<br>
+            支持：网易云音乐 · QQ音乐 · 哔哩哔哩 · 酷狗音乐<br>
+            本项目仅供学习研究使用，请遵守各平台服务条款。
+          </div>
+
+          <div class="settings-section-title" style="margin-top:20px">🔗 快捷链接</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <button class="setting-btn" onclick="api.openExternal('https://github.com')" style="text-align:left;">
+              📦 GitHub 仓库
+            </button>
+            <button class="setting-btn" onclick="api.openExternal('https://music.163.com')" style="text-align:left;">
+              🎵 网易云音乐
+            </button>
+            <button class="setting-btn" onclick="api.openExternal('https://y.qq.com')" style="text-align:left;">
+              🎶 QQ 音乐
+            </button>
+            <button class="setting-btn" onclick="api.openExternal('https://www.bilibili.com')" style="text-align:left;">
+              📺 哔哩哔哩
+            </button>
+          </div>
+
+          <div class="settings-section-title" style="margin-top:20px">⌨️ 快捷键</div>
+          <div class="settings-hint-box" style="font-size:12px;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;">
+              <span><kbd style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">Space</kbd> 播放/暂停</span>
+              <span><kbd style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">←</kbd><kbd style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">→</kbd> 快进/快退 5s</span>
+              <span><kbd style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">↑</kbd><kbd style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">↓</kbd> 音量 +/- 5%</span>
+              <span><kbd style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">N</kbd> 下一首</span>
+              <span><kbd style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">P</kbd> 上一首</span>
+              <span><kbd style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">S</kbd> 随机播放</span>
+              <span><kbd style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">L</kbd> 循环模式</span>
+              <span><kbd style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">Ctrl+F</kbd> 搜索</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 音频格式转换弹窗 -->
+<div class="playlist-modal-overlay hidden" id="convertModal" onclick="event.target === this && closeConvertModal()">
+  <div class="playlist-modal" style="min-width:320px;max-width:380px;">
+    <div class="playlist-modal-header">
+      <span class="playlist-modal-title" id="convertModalTitle">🔄 转换格式</span>
+      <button class="playlist-modal-close" onclick="closeConvertModal()">✕</button>
+    </div>
+    <div class="playlist-modal-body" style="padding:16px;display:flex;flex-direction:column;gap:10px;">
+      <div id="convertModalInfo" style="font-size:12px;color:var(--text-secondary);word-break:break-all;"></div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <button class="setting-btn" style="text-align:left;" onclick="doConvertAudio('mp3')">
+          🎵 MP3 <span style="color:var(--text-secondary);font-size:11px;">（320kbps，推荐）</span>
+        </button>
+        <button class="setting-btn" style="text-align:left;" onclick="doConvertAudio('flac')">
+          📀 FLAC <span style="color:var(--text-secondary);font-size:11px;">（无损压缩）</span>
+        </button>
+        <button class="setting-btn" style="text-align:left;" onclick="doConvertAudio('aac')">
+          🎶 AAC <span style="color:var(--text-secondary);font-size:11px;">（高压缩比）</span>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 歌单歌曲弹窗 -->
+<div class="playlist-modal-overlay hidden" id="playlistModal" onclick="closePlaylistModalOnBg(event)">
+  <div class="playlist-modal">
+    <div class="playlist-modal-header">
+      <span class="playlist-modal-title" id="playlistModalTitle">📀 歌单</span>
+      <button class="playlist-modal-close" onclick="closePlaylistModal()">✕</button>
+    </div>
+    <div class="playlist-modal-body" id="playlistModalBody">
+      <div class="loading"><div class="spinner"></div> 加载中...</div>
+    </div>
+  </div>
+</div>
+
+<!-- 下载路径模板编辑器弹窗 -->
+<div class="playlist-modal-overlay hidden" id="dlTemplateEditorModal" onclick="event.target === this && closeDlTemplateEditor()">
+  <div class="playlist-modal" style="min-width:400px;max-width:520px;">
+    <div class="playlist-modal-header">
+      <span class="playlist-modal-title" id="dlTemplateEditorTitle">➕ 新建路径模板</span>
+      <button class="playlist-modal-close" onclick="closeDlTemplateEditor()">✕</button>
+    </div>
+    <div class="playlist-modal-body" style="display:flex;flex-direction:column;gap:12px;padding:16px;">
+      <div class="setting-row">
+        <label class="setting-label">模板名称</label>
+        <input type="text" class="setting-input" id="dlTemplateName" placeholder="例如: 按歌手分目录" maxlength="30">
+      </div>
+      <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+        <label class="setting-label">路径格式</label>
+        <input type="text" class="setting-input" id="dlTemplatePath" placeholder="例如: D:/音乐/{artist}/{album}/{title}" style="font-family:monospace;font-size:12px;">
+        <div id="dlTemplateVarHints" class="setting-hint" style="font-size:11px;color:var(--neon-dim);">可用变量: {artist} {album} {title} {source} {year} {track}</div>
+      </div>
+      <button class="btn-primary" onclick="saveDlTemplate()" style="margin-top:4px;">💾 保存模板</button>
+    </div>
+  </div>
+</div>
+
+<!-- 下载路径模板编辑器弹窗 -->
+<div class="playlist-modal-overlay hidden" id="dlTemplateEditorModal" onclick="event.target === this && closeDlTemplateEditor()">
+  <div class="playlist-modal" style="min-width:400px;max-width:520px;">
+    <div class="playlist-modal-header">
+      <span class="playlist-modal-title" id="dlTemplateEditorTitle">➕ 新建路径模板</span>
+      <button class="playlist-modal-close" onclick="closeDlTemplateEditor()">✕</button>
+    </div>
+    <div class="playlist-modal-body" style="display:flex;flex-direction:column;gap:12px;padding:16px;">
+      <div class="setting-row">
+        <label class="setting-label">模板名称</label>
+        <input type="text" class="setting-input" id="dlTemplateName" placeholder="例如: 按歌手分目录" maxlength="30">
+      </div>
+      <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:4px;">
+        <label class="setting-label">路径格式</label>
+        <input type="text" class="setting-input" id="dlTemplatePath" placeholder="例如: D:/音乐/{artist}/{album}/{title}" style="font-family:monospace;font-size:12px;">
+        <div id="dlTemplateVarHints" class="setting-hint" style="font-size:11px;color:var(--neon-dim);">可用变量: {artist} {album} {title} {source} {year} {track}</div>
+      </div>
+      <button class="btn-primary" onclick="saveDlTemplate()" style="margin-top:4px;">💾 保存模板</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast 区 -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- 隐藏 audio -->
+<audio id="audioPlayer"></audio>
+
+<!-- Vite entry: app.js imports all modules -->
+<script type="module" src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Cookie 一键获取工具</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0f0f1a; color: #e0e0e0;
+    display: flex; align-items: center; justify-content: center;
+    min-height: 100vh; padding: 20px;
+  }
+  .card {
+    background: #1a1a2e; border: 1px solid #2a2a4a;
+    border-radius: 20px; padding: 40px; max-width: 600px; width: 100%;
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  }
+  h1 { font-size: 22px; margin-bottom: 8px; color: #fff; }
+  .subtitle { color: #8b89a8; font-size: 14px; margin-bottom: 28px; }
+
+  .step {
+    background: #13132a; border: 1px solid #252545;
+    border-radius: 14px; padding: 20px; margin-bottom: 16px;
+  }
+  .step-num {
+    display: inline-block; width: 26px; height: 26px;
+    background: #6c63ff; color: white; border-radius: 50%;
+    text-align: center; line-height: 26px; font-size: 13px; font-weight: 700;
+    margin-right: 10px;
+  }
+  .step-title { font-weight: 600; font-size: 15px; margin-bottom: 10px; }
+  .step-desc { font-size: 13px; color: #9b99b8; line-height: 1.7; }
+
+  .bookmarklet-btn {
+    display: inline-block; background: #6c63ff; color: white;
+    padding: 12px 24px; border-radius: 10px; text-decoration: none;
+    font-weight: 600; font-size: 14px; margin-top: 8px;
+    transition: background .2s; cursor: move;
+  }
+  .bookmarklet-btn:hover { background: #857aff; }
+
+  .hint-box {
+    background: rgba(108,99,255,.08); border: 1px solid rgba(108,99,255,.2);
+    border-radius: 10px; padding: 14px 16px; margin-top: 20px;
+    font-size: 13px; color: #9b99b8; line-height: 1.7;
+  }
+  .hint-box strong { color: #c4c2e0; }
+
+  code {
+    background: #0d0d1a; padding: 2px 8px; border-radius: 5px;
+    font-family: 'Consolas', monospace; font-size: 12px;
+    color: #ff79c6;
+  }
+
+  .copy-btn {
+    background: #2a2a50; border: 1px solid #3a3a60;
+    color: #e0e0e0; padding: 10px 20px; border-radius: 8px;
+    cursor: pointer; font-size: 13px; font-weight: 600;
+    transition: all .2s; margin-top: 10px;
+  }
+  .copy-btn:hover { background: #3a3a60; }
+  .copy-btn.copied { background: #2d4a2d; border-color: #4a7a4a; color: #8aff8a; }
+
+  textarea {
+    width: 100%; height: 80px; resize: vertical;
+    background: #0d0d1a; border: 1px solid #2a2a4a;
+    border-radius: 8px; color: #e0e0e0; font-size: 12px;
+    padding: 10px; font-family: 'Consolas', monospace;
+    outline: none; margin-top: 10px;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>🍪 Cookie 一键获取工具</h1>
+  <div class="subtitle">拖拽书签到浏览器书签栏，在目标网站点击即可自动复制 Cookie</div>
+
+  <div class="step">
+    <div class="step-title"><span class="step-num">1</span>拖拽下面这个按钮到书签栏</div>
+    <div class="step-desc">
+      <a class="bookmarklet-btn" href="javascript:(function(){const c=document.cookie;if(!c){alert('当前页面没有 Cookie，请先登录！');return;}navigator.clipboard.writeText(c).then(()=>{alert('✅ Cookie 已复制到剪贴板！\n\n请粘贴到音乐下载器的设置面板中。');}).catch(()=>{prompt('请手动复制以下 Cookie：',c);});})();">
+        📋 复制当前 Cookie
+      </a>
+    </div>
+    <div class="step-desc" style="margin-top:10px">
+      ↑ 鼠标按住上面紫色按钮，拖到浏览器顶部的书签栏后松手
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-title"><span class="step-num">2</span>在目标网站点击书签</div>
+    <div class="step-desc">
+      打开 <strong>music.163.com</strong> / <strong>y.qq.com</strong> / <strong>bilibili.com</strong> 并登录后，<br>
+      点击刚才添加的书签，Cookie 会自动复制到剪贴板。
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-title"><span class="step-num">3</span>粘贴到音乐下载器</div>
+    <div class="step-desc">
+      打开音乐下载器 → 点击左侧 <strong>"设置 / Cookie"</strong> → 粘贴到对应平台输入框 → 保存
+    </div>
+  </div>
+
+  <div class="hint-box">
+    <strong>手动方式（备用）：</strong><br>
+    1. 在目标网站按 <code>F12</code> 打开开发者工具<br>
+    2. 切换到 <code>Console（控制台）</code> 标签<br>
+    3. 粘贴并回车执行下面这行代码：<br><br>
+    <code>copy(document.cookie)</code><br><br>
+    4. Cookie 已复制到剪贴板，直接粘贴即可。
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,72 @@
+{
+  "name": "music-downloader",
+  "version": "1.0.0",
+  "description": "多平台音乐下载器 - 支持网易云/QQ音乐/B站",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "dev": "vite",
+    "start": "electron .",
+    "build": "vite build && node scripts/postbuild.js",
+    "dist": "vite build && electron-builder",
+    "postinstall": "electron-builder install-app-deps",
+    "test": "node --test test\\cookie.test.js test\\parseFilename.test.js test\\request.test.js test\\recommendations.test.js test\\prefs.test.js test\\checkLocal.test.js test\\history.test.js",
+    "lint": "eslint src/ test/"
+  },
+  "keywords": [
+    "music",
+    "downloader",
+    "electron"
+  ],
+  "author": "MusicDL",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "electron": "^28.3.3",
+    "electron-builder": "^24.0.0",
+    "eslint": "^8.57.0",
+    "vite": "^5.4.21",
+    "vite-plugin-electron": "^1.0.4",
+    "vite-plugin-electron-renderer": "^1.0.0"
+  },
+  "dependencies": {
+    "crypto-js": "^4.2.0",
+    "iconv-lite": "^0.6.3",
+    "music-metadata": "^7.14.0",
+    "NeteaseCloudMusicApi": "^4.32.0",
+    "node-id3": "^0.2.9",
+    "qq-music-api": "^1.1.2"
+  },
+  "overrides": {},
+  "build": {
+    "appId": "com.musicdl.app",
+    "productName": "音乐下载器",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "dist/**/*",
+      "assets/**/*",
+      "package.json",
+      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
+      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
+      "!**/node_modules/*.d.ts",
+      "!**/node_modules/.bin"
+    ],
+    "extraResources": [
+      {
+        "from": "scripts/",
+        "to": "scripts/",
+        "filter": [
+          "**/*"
+        ]
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "assets/icon.ico"
+    },
+    "mac": {
+      "target": "dmg"
+    }
+  }
+}
