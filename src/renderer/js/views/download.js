@@ -150,7 +150,7 @@ function renderQueue(queue) {
       <div class="queue-cover-ph" ${s.cover ? 'style="display:none"' : ''}>🎵</div>
       <div class="queue-info">
         <div class="queue-title">${esc(s.title || '未知')}</div>
-        <div class="queue-status status-${s.status}">${statusLabel(s.status)}${s.error ? ': ' + esc(s.error) : ''}</div>
+        <div class="queue-status status-${s.status}">${statusLabel(s.status)}${s.error ? ': ' + esc(s.error) : ''}${errorTag(s.errorCode)}</div>
         ${s.status === 'downloading' ? `
         <div class="progress-bar-wrap"><div class="progress-bar" id="prog-${escAttr(s.taskId)}" style="width:${s.progress||0}%"></div></div>` : ''}
       </div>
@@ -167,6 +167,25 @@ function renderQueue(queue) {
 
 // esc() 和 statusLabel() 已由 utils.js 全局导出，此处不再重复定义
 
+// ── 错误分类标签 ───────────────────────────────────────
+const ERROR_TAGS = {
+  VIP_REQUIRED:      { label: '需VIP', color: 'var(--neon-orange)' },
+  AUTH_EXPIRED:      { label: 'Cookie过期', color: 'var(--neon-orange)' },
+  LOGIN_REQUIRED:    { label: '需登录', color: 'var(--neon-orange)' },
+  COPYRIGHT_RESTRICTED: { label: '版权受限', color: 'var(--neon-purple)' },
+  UNAVAILABLE:       { label: '不可用', color: 'var(--neon-purple)' },
+  CDN_EMPTY:         { label: 'CDN异常', color: 'var(--neon-red)' },
+  NETWORK_TIMEOUT:   { label: '网络超时', color: 'var(--neon-yellow)' },
+  NO_AUDIO_STREAM:   { label: '无音频流', color: 'var(--neon-red)' },
+  UNKNOWN_PLATFORM:  { label: '未知平台', color: 'var(--text-dim)' },
+};
+
+function errorTag(errorCode) {
+  const tag = ERROR_TAGS[errorCode];
+  if (!tag) return '';
+  return `<span style="display:inline-block;font-size:10px;padding:1px 6px;border-radius:4px;background:${tag.color}22;color:${tag.color};border:1px solid ${tag.color}44;margin-left:6px;">${tag.label}</span>`;
+}
+
 // ── 单项操作 ─────────────────────────────────────────
 async function retryQueueItem(taskId) {
   try {
@@ -175,6 +194,41 @@ async function retryQueueItem(taskId) {
     else { showToast('重试失败：' + (r?.error || '未知错误'), 'error', 3000); }
   } catch (e) {
     showToast('重试失败：' + e.message, 'error', 3000);
+  }
+}
+
+// ── 重试所有失败任务 ─────────────────────────────────
+async function retryAllFailed() {
+  const queue = getState('queueSnapshot') || [];
+  const failed = queue.filter(s => s.status === 'error');
+  if (!failed.length) { showToast('没有失败的任务', 'info', 1500); return; }
+
+  // 按错误类型分类统计
+  const errors = {};
+  failed.forEach(s => {
+    const code = s.errorCode || 'UNKNOWN';
+    errors[code] = (errors[code] || 0) + 1;
+  });
+  const summary = Object.entries(errors).map(([k, v]) => `${k}:${v}`).join(' ');
+  showToast(`正在重试 ${failed.length} 个失败任务 (${summary})...`, 'info', 2000);
+
+  let ok = 0;
+  for (const s of failed) {
+    try {
+      // VIP_REQUIRED / AUTH_EXPIRED / LOGIN_REQUIRED 等致命错误不自动重试
+      if (s.errorCode && /^(VIP_REQUIRED|AUTH_EXPIRED|LOGIN_REQUIRED)$/.test(s.errorCode)) {
+        continue;
+      }
+      const r = await api.retryDownload(s.taskId);
+      if (r && r.ok) ok++;
+    } catch (_e) { /* 单个失败不影响整体 */ }
+  }
+
+  const skipped = failed.length - ok;
+  if (ok > 0) {
+    showToast(`已重试 ${ok} 项${skipped > 0 ? `，跳过 ${skipped} 项（需登录/VIP）` : ''}`, 'success', 3000);
+  } else {
+    showToast('所有失败任务均需手动处理（VIP/登录限制）', 'warn', 3000);
   }
 }
 
@@ -318,6 +372,7 @@ window.doConvertAudio = doConvertAudio;
 window.batchRetryDl = batchRetryDl;
 window.batchRemoveDl = batchRemoveDl;
 window.retryQueueItem = retryQueueItem;
+window.retryAllFailed = retryAllFailed;
 window.removeQueueItem = removeQueueItem;
 window.clearFinishedDownloads = clearFinishedDownloads;
 window.clearAllDownloads = clearAllDownloads;

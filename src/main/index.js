@@ -557,6 +557,7 @@ async function processOneSong(song) {
         if (urlInfo?.fatal) {
           isFatal = true;
           lastError = new Error(urlInfo.error || '无法获取下载链接');
+          song.errorCode = urlInfo.code || 'UNKNOWN';
           logger.warn(`[processOneSong] ✗ ${song.source} ${song.title} - ${song.artist} 失败: ${lastError.message} (code=${urlInfo.code})`);
           break;
         }

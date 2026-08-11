@@ -81,6 +81,7 @@ function register() {
     if (song.status !== 'error') return { ok: false, error: '该任务不在失败状态' };
     song.status = 'pending';
     song.error = null;
+    song.errorCode = null;
     song.progress = 0;
     downloadQueue.splice(idx, 1);
     const insertAt = downloadQueue.findIndex(s => s.status === 'downloading');
