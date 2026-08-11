@@ -11,6 +11,29 @@ const RING_CIRCUMFERENCE = 552.9; // 2 * PI * 88
 // ── 状态 ─────────────────────────────────────────────
 let audioCtx = null;
 
+// ── 歌词设置（同步缓存，避免 timeupdate 热路径异步） ────
+let _lyricFontSize = 18;
+let _lyricOffset = 0;
+
+function _loadLyricSettings() {
+  api.getPref('lyricFontSize').then(v => { _lyricFontSize = v != null ? +v : 18; });
+  api.getPref('lyricOffset').then(v => { _lyricOffset = v != null ? +v : 0; });
+}
+// 页面加载时读取一次
+setTimeout(_loadLyricSettings, 0);
+
+function applyLyricFontSize(size) {
+  _lyricFontSize = +size || 18;
+  const lyricsArea = document.getElementById('lyricsArea');
+  if (lyricsArea) lyricsArea.style.fontSize = _lyricFontSize + 'px';
+}
+
+function applyLyricOffset(ms) {
+  _lyricOffset = +ms || 0;
+}
+window.applyLyricFontSize = applyLyricFontSize;
+window.applyLyricOffset = applyLyricOffset;
+
 // ── EQ 5 段均衡器 ────────────────────────────────────
 const EQ_BANDS = [
    { freq: 60,   label: '60Hz',   type: 'lowshelf' },
@@ -406,6 +429,40 @@ function showReportModal(html) {
   document.body.appendChild(overlay);
 }
 
+// ── 播放进度记忆 ─────────────────────────────────────
+const _playProgressKey = (song) => song.filePath || `${song.source}:${song.id}`;
+
+async function savePlayProgress(song, time) {
+  try {
+    const enabled = await api.getPref('playProgressMemory');
+    if (enabled === false) return;
+    const key = _playProgressKey(song);
+    const progressMap = await api.getPref('playProgressMap') || {};
+    progressMap[key] = { time, savedAt: Date.now() };
+    // 只保留最近 200 首的进度
+    const entries = Object.entries(progressMap);
+    if (entries.length > 200) {
+      entries.sort((a, b) => (a[1].savedAt || 0) - (b[1].savedAt || 0));
+      const trimmed = Object.fromEntries(entries.slice(-200));
+      await api.setPref('playProgressMap', trimmed);
+    } else {
+      await api.setPref('playProgressMap', progressMap);
+    }
+  } catch (_e) { /* ignore */ }
+}
+
+async function restorePlayProgress(song) {
+  try {
+    const enabled = await api.getPref('playProgressMemory');
+    if (enabled === false) return 0;
+    const key = _playProgressKey(song);
+    const progressMap = await api.getPref('playProgressMap') || {};
+    const entry = progressMap[key];
+    if (entry && entry.time > 3) return entry.time; // 忽略前 3 秒
+    return 0;
+  } catch (_e) { return 0; }
+}
+
 export async function loadAndPlay(song, prefetchedUrl, isNetworkSong = false) {
   if (!song) return;
 
@@ -453,6 +510,16 @@ export async function loadAndPlay(song, prefetchedUrl, isNetworkSong = false) {
     updateRingProgress(0);
 
     audio.src = localUrl;
+    // 恢复播放进度
+    const savedTime = await restorePlayProgress(song);
+    if (savedTime > 0) {
+      audio.addEventListener('loadedmetadata', () => {
+        if (audio.duration > savedTime) {
+          audio.currentTime = savedTime;
+          showToast(`📍 从 ${Math.floor(savedTime/60)}:${String(Math.floor(savedTime%60)).padStart(2,'0')} 继续播放`, 'info', 2000);
+        }
+      }, { once: true });
+    }
     audio.play().catch(() => {
       showToast('⚠️ 自动播放被拦截，请点击播放按钮', 'warn', 3000);
     });
@@ -505,6 +572,16 @@ export async function loadAndPlay(song, prefetchedUrl, isNetworkSong = false) {
   // 如果有预获取的 URL（来自 proxyPlay），则播放音频
   if (localUrl) {
     audio.src = localUrl;
+    // 恢复播放进度
+    const savedTime2 = await restorePlayProgress(song);
+    if (savedTime2 > 0) {
+      audio.addEventListener('loadedmetadata', () => {
+        if (audio.duration > savedTime2) {
+          audio.currentTime = savedTime2;
+          showToast(`📍 从 ${Math.floor(savedTime2/60)}:${String(Math.floor(savedTime2%60)).padStart(2,'0')} 继续播放`, 'info', 2000);
+        }
+      }, { once: true });
+    }
     audio.play().catch(() => {
       showToast('⚠️ 自动播放被拦截，请点击播放按钮', 'warn', 3000);
     });
@@ -605,6 +682,9 @@ export function togglePlay() {
   if (audio.paused) {
     audio.play().then(() => {}).catch(() => {});
   } else {
+    // 暂停时保存播放进度
+    const curSong = getState('currentPlaying');
+    if (curSong && audio.currentTime > 0) { savePlayProgress(curSong, audio.currentTime); }
     updatePlayStatsOnStop();
     audio.pause();
   }
@@ -757,6 +837,7 @@ function updateRingProgress(fraction) {
 }
 
 // ── 进度条 ───────────────────────────────────────────
+let _lastProgressSave = 0;
 export function updateProgress() {
   const pct = audio.duration ? (audio.currentTime / audio.duration) * 100 : 0;
   const fraction = audio.duration ? audio.currentTime / audio.duration : 0;
@@ -768,6 +849,13 @@ export function updateProgress() {
   if (total) total.textContent = fmtTime(audio.duration);
   updateRingProgress(fraction);
   updateLyric(audio.currentTime);
+  // 每 30 秒自动保存播放进度
+  const t = Date.now();
+  if (t - _lastProgressSave > 30000 && audio.currentTime > 5) {
+    _lastProgressSave = t;
+    const curSong = getState('currentPlaying');
+    if (curSong) savePlayProgress(curSong, audio.currentTime);
+  }
 }
 
 export function seekAudio(e) {
@@ -780,6 +868,9 @@ export function seekAudio(e) {
 
 export function onAudioEnded() {
   const loopMode = getState('loopMode');
+  // 播放结束时清除进度记忆（已播完不需要恢复）
+  const curSong = getState('currentPlaying');
+  if (curSong) { try { savePlayProgress(curSong, 0); } catch (_e) {} }
   if (loopMode === 2) {
     // 修复：单曲循环时也要记录播放时长，避免统计丢失
     updatePlayStatsOnStop();
@@ -796,16 +887,69 @@ export function onAudioEnded() {
 export function parseLrc(lrc) {
   if (!lrc) { showNoLyrics(); return; }
   const parsedLyrics = [];
+  let hasLangTags = false;
+
+  // 第一遍：解析所有行，检测 [lang:xx] 标签
+  const rawEntries = [];
   lrc.split('\n').forEach(line => {
-    const m = line.match(/\[(\d+):(\d+\.?\d*)\](.*)/);
-    if (m) parsedLyrics.push({ t: parseInt(m[1]) * 60 + parseFloat(m[2]), text: m[3].trim() });
+    const langTagMatch = line.match(/^\[lang:(\w+)\]/);
+    if (langTagMatch) {
+      hasLangTags = true;
+      // 提取 [lang:xx] 后面的时间戳和文本
+      const rest = line.slice(langTagMatch[0].length);
+      const m = rest.match(/\[(\d+):(\d+\.?\d*)\](.*)/);
+      if (m) {
+        rawEntries.push({
+          lang: langTagMatch[1],
+          t: parseInt(m[1]) * 60 + parseFloat(m[2]),
+          text: m[3].trim()
+        });
+      }
+    } else {
+      const m = line.match(/\[(\d+):(\d+\.?\d*)\](.*)/);
+      if (m) {
+        rawEntries.push({
+          lang: null,
+          t: parseInt(m[1]) * 60 + parseFloat(m[2]),
+          text: m[3].trim()
+        });
+      }
+    }
   });
+
+  if (hasLangTags) {
+    // 双语模式：按时间戳分组，合并主语言和副语言
+    const byTime = new Map(); // key = time, value = {main: text, sub: text}
+    rawEntries.forEach(e => {
+      const key = e.t.toFixed(3);
+      if (!byTime.has(key)) {
+        byTime.set(key, { t: e.t, text: '', subText: '' });
+      }
+      const entry = byTime.get(key);
+      // 第一个出现的语言为主语言，第二个为副语言
+      if (!entry.text) {
+        entry.text = e.text;
+      } else if (!entry.subText) {
+        entry.subText = e.text;
+      }
+    });
+    // 转为数组并排序
+    for (const entry of byTime.values()) {
+      parsedLyrics.push(entry);
+    }
+  } else {
+    // 单语模式：保持原有行为
+    rawEntries.forEach(e => {
+      parsedLyrics.push({ t: e.t, text: e.text, subText: '' });
+    });
+  }
+
   parsedLyrics.sort((a, b) => a.t - b.t);
 
   const lyricsArea = document.getElementById('lyricsArea');
   if (!parsedLyrics.length) { showStaticLyrics(lrc); return; }
 
-  // 为每行计算逐字时间戳
+  // 为每行计算逐字时间戳（仅基于主语言文本）
   for (let i = 0; i < parsedLyrics.length; i++) {
     const cur = parsedLyrics[i];
     const next = parsedLyrics[i + 1];
@@ -816,6 +960,8 @@ export function parseLrc(lrc) {
     cur.wordTimes = cur.words.map((_, j) => cur.t + j * wordDuration);
   }
 
+  const hasBilingual = parsedLyrics.some(l => l.subText);
+
   if (lyricsArea) {
     lyricsArea.style.display = 'block';
     lyricsArea.classList.remove('static-mode');
@@ -823,8 +969,13 @@ export function parseLrc(lrc) {
     const wordSpans = l.words.map((w, j) =>
       `<span class="lyric-word" data-t="${l.wordTimes[j].toFixed(2)}">${esc(w)}</span>`
     ).join('');
-    return `<div class="lyric-line" id="lyric-${i}">${wordSpans || '&nbsp;'}</div>`;
+    const subHtml = l.subText
+      ? `<div class="lyric-sub-text">${esc(l.subText)}</div>`
+      : '';
+    return `<div class="lyric-line${hasBilingual ? ' bilingual' : ''}" id="lyric-${i}">${wordSpans || '&nbsp;'}${subHtml}</div>`;
   }).join('');
+  // 应用歌词字体大小
+  if (lyricsArea) lyricsArea.style.fontSize = _lyricFontSize + 'px';
   }
   setState('parsedLyrics', parsedLyrics);
   // 重置歌词 DOM 缓存
@@ -862,6 +1013,7 @@ export function showStaticLyrics(text) {
   lyricsArea.style.display = 'block';
   lyricsArea.classList.add('static-mode');
   lyricsArea.innerHTML = lines.map(l => `<div class="lyric-line static">${esc(l)}</div>`).join('');
+  lyricsArea.style.fontSize = _lyricFontSize + 'px';
   lyricsArea.scrollTop = 0;
   setState('parsedLyrics', []);
 }
@@ -883,7 +1035,9 @@ let _prevLyricIdx = -1;
 export function updateLyric(t) {
   const parsedLyrics = getState('parsedLyrics');
   if (!parsedLyrics || !parsedLyrics.length) return;
-  let idx = parsedLyrics.findIndex(l => l.t > t) - 1;
+  // 应用歌词时间偏移（offset 单位 ms，t 单位 s）
+  const adjustedT = t + _lyricOffset / 1000;
+  let idx = parsedLyrics.findIndex(l => l.t > adjustedT) - 1;
   if (idx < 0) idx = 0;
 
   // 只在歌词行变化时更新 DOM
@@ -916,7 +1070,7 @@ export function updateLyric(t) {
       const wt = parseFloat(w.dataset.t);
       const nextLine = parsedLyrics[idx + 1];
       const lineEnd = nextLine ? nextLine.t : parsedLyrics[idx].t + 3;
-      w.classList.toggle('word-active', t >= wt && t < lineEnd);
+      w.classList.toggle('word-active', adjustedT >= wt && adjustedT < lineEnd);
     });
   }
 }

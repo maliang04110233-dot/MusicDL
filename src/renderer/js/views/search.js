@@ -165,6 +165,40 @@ function searchCleanup() {
 // ── 搜索类型状态 ─────────────────────────────────────
 let _searchType = 'song'; // 'song' | 'album' | 'singer'
 
+// ── 批量选择模式 ─────────────────────────────────────
+let _searchBatchMode = false;
+
+function enterSearchBatchMode() {
+  _searchBatchMode = true;
+  const btn = document.getElementById('searchSelectBtn');
+  if (btn) btn.classList.add('active');
+  const songList = document.getElementById('songList');
+  if (songList) songList.classList.add('batch-mode');
+  setState('selectedSongs', new Set());
+  updateBatchInfo();
+  // 显示批量工具栏（如果有搜索结果）
+  const songs = getState('songs');
+  if (songs && songs.length > 0 && _dom.batchToolbar) {
+    _dom.batchToolbar.style.display = 'flex';
+  }
+}
+
+function exitSearchBatchMode() {
+  _searchBatchMode = false;
+  const btn = document.getElementById('searchSelectBtn');
+  if (btn) btn.classList.remove('active');
+  const songList = document.getElementById('songList');
+  if (songList) songList.classList.remove('batch-mode');
+  setState('selectedSongs', new Set());
+  if (_dom.batchToolbar) _dom.batchToolbar.style.display = 'none';
+  // 隐藏进度条
+  const progressWrap = document.getElementById('batchProgressWrap');
+  if (progressWrap) progressWrap.style.display = 'none';
+  // 重新渲染以清除 checkbox 选中状态
+  const songs = getState('songs');
+  if (songs && songs.length > 0) renderSongList(songs);
+}
+
 // ── 搜索历史（持久化到主进程 prefs.json，修复 B8）─────────────────────
 let _searchHistoryCache = null;  // 内存缓存，首次 await 加载
 
@@ -298,7 +332,7 @@ async function doSearchByType(type, page, keyword, source) {
     setState(stateKey[type], cached.items);
     renderMap[type](cached.items);
     if (paginationMap[type]) paginationMap[type](page, cached.items.length, cached.total);
-    if (type === 'song' && cached.items.length > 0) {
+    if (type === 'song' && cached.items.length > 0 && _searchBatchMode) {
       if (_dom.batchToolbar) _dom.batchToolbar.style.display = 'flex';
       updateBatchInfo();
     }
@@ -327,7 +361,7 @@ async function doSearchByType(type, page, keyword, source) {
     if (paginationMap[type]) {
       paginationMap[type](page, items.length, result.total);
     }
-    if (type === 'song' && items.length > 0) {
+    if (type === 'song' && items.length > 0 && _searchBatchMode) {
       if (_dom.batchToolbar) _dom.batchToolbar.style.display = 'flex';
       updateBatchInfo();
     }
@@ -355,6 +389,8 @@ function doSearch(page = 1) {
   setState('currentKeyword', keyword);
   setState('currentPage', page);
   setState('selectedSongs', new Set());
+  // 新搜索时退出批量选择模式
+  if (_searchBatchMode) exitSearchBatchMode();
   hideSearchHistory();
 
   if (_dom.songList) {
@@ -458,7 +494,7 @@ async function openAlbumDetail(albumMid, source) {
     _searchType = 'song';
     renderSongList(songs);
     document.getElementById('pagination').style.display = 'none';
-    document.getElementById('batchToolbar').style.display = songs.length ? 'flex' : 'none';
+    document.getElementById('batchToolbar').style.display = (songs.length && _searchBatchMode) ? 'flex' : 'none';
     showToast(`专辑共 ${songs.length} 首`, 'info', 2000);
   } catch (e) {
     clearLoading();
@@ -530,7 +566,7 @@ async function loadSingerDetail(singerMid, tab) {
       setState('songs', songs);
       _searchType = 'song';
       renderSongList(songs);
-      document.getElementById('batchToolbar').style.display = songs.length ? 'flex' : 'none';
+      document.getElementById('batchToolbar').style.display = (songs.length && _searchBatchMode) ? 'flex' : 'none';
       updateBatchInfo();
     } else {
       const result = await api.getSingerAlbums(singerMid, source, 1, 99);
@@ -571,6 +607,12 @@ function renderSongList(list) {
       <div class="empty-hint">换个关键词试试</div>
     </div>`;
     return;
+  }
+  // 批量模式下保持 batch-mode class
+  if (_searchBatchMode) {
+    el.classList.add('batch-mode');
+  } else {
+    el.classList.remove('batch-mode');
   }
   const selected = getState('selectedSongs') || new Set();
   el.innerHTML = list.map((s, i) => {
@@ -649,17 +691,43 @@ async function batchDownload() {
   const quality = document.getElementById('qualitySelect').value;
   const saveDir = getState('saveDir');
   let queued = 0, skipped = 0;
+  const total = toAdd.length;
 
-  for (const s of toAdd) {
+  // 显示进度条
+  const progressWrap = document.getElementById('batchProgressWrap');
+  const progressFill = document.getElementById('batchProgressFill');
+  const progressText = document.getElementById('batchProgressText');
+  const progressLabel = document.getElementById('batchProgressLabel');
+  if (progressWrap) {
+    progressWrap.style.display = 'flex';
+    if (progressLabel) progressLabel.textContent = '正在加入下载队列...';
+  }
+
+  for (let i = 0; i < toAdd.length; i++) {
+    const s = toAdd[i];
     const existing = (state.get('queueSnapshot') || []).find(q =>
       q.id === s.id && q.source === s.source && q.status !== 'done');
-    if (existing) { skipped++; continue; }
-    try {
-      await api.addToQueue({ ...s, saveDir, quality });
-      queued++;
-    } catch (e) { console.warn('加入队列失败:', s.title, e.message); }
+    if (existing) { skipped++; } else {
+      try {
+        await api.addToQueue({ ...s, saveDir, quality });
+        queued++;
+      } catch (e) { console.warn('加入队列失败:', s.title, e.message); }
+    }
+    // 更新进度
+    const pct = Math.round(((i + 1) / total) * 100);
+    if (progressFill) progressFill.style.width = pct + '%';
+    if (progressText) progressText.textContent = `${i + 1}/${total}`;
   }
+
+  // 完成后隐藏进度条
+  if (progressWrap) {
+    if (progressLabel) progressLabel.textContent = `完成！已加入 ${queued} 首`;
+    setTimeout(() => { progressWrap.style.display = 'none'; }, 1500);
+  }
+
   showToast(`已加入 ${queued} 首${skipped ? `（跳过 ${skipped} 首已在队列）` : ''}`, 'success');
+  // 批量下载后退出选择模式
+  exitSearchBatchMode();
 }
 
 function batchPlay() {
@@ -766,6 +834,8 @@ export {
   debounceSearch,
   selectSuggestion,
   searchCleanup,
+  enterSearchBatchMode,
+  exitSearchBatchMode,
 }
 
 // ── 全局桥接（HTML onclick 兼容） ──────────────────────
@@ -789,6 +859,8 @@ window.backToSearch = backToSearch;
 window.debounceSearch = debounceSearch;
 window.selectSuggestion = selectSuggestion;
 window.searchCleanup = searchCleanup;
+window.enterSearchBatchMode = enterSearchBatchMode;
+window.exitSearchBatchMode = exitSearchBatchMode;
 
 // ── DOM 缓存初始化 ──────────────────────────────────
 _cacheDom();

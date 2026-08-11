@@ -318,11 +318,15 @@ async function openLoginWindowUI(platformId, btn) {
 const GENERAL_PREFS = {
   quality:       { key: 'quality',       default: 'standard',   el: 'settingQuality' },
   concurrency:   { key: 'concurrency',   default: 3,             el: 'settingConcurrency' },
+  speedLimit:    { key: 'speedLimit',    default: 0,             el: 'settingSpeedLimit' },
   filenameTmpl:  { key: 'filenameTmpl',  default: '{artist} - {title}', el: 'settingFilenameTmpl' },
   autoLyric:     { key: 'autoLyric',     default: true,          el: 'settingAutoLyric' },
   autoCover:     { key: 'autoCover',     default: true,          el: 'settingAutoCover' },
   notifications: { key: 'notifications',  default: true,          el: 'settingNotifications' },
+  playProgressMemory: { key: 'playProgressMemory', default: true, el: 'settingPlayProgressMemory' },
   theme:         { key: 'theme',         default: 'default',     el: 'settingTheme' },
+  lyricFontSize: { key: 'lyricFontSize', default: 18,            el: 'settingLyricFontSize' },
+  lyricOffset:   { key: 'lyricOffset',   default: 0,             el: 'settingLyricOffset' },
 };
 
 async function loadGeneralSettings() {
@@ -342,9 +346,23 @@ async function loadGeneralSettings() {
 }
 
 // ── 主题切换 ──────────────────────────────────────────
+let _themeMediaQuery = null;
+
 function applyTheme(theme) {
   const t = theme || 'default';
-  if (t === 'default') {
+  // 清除之前的系统主题监听
+  if (_themeMediaQuery) { _themeMediaQuery.onchange = null; _themeMediaQuery = null; }
+
+  if (t === 'auto') {
+    // 跟随系统主题
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    _themeMediaQuery = mq;
+    const applySystem = (isDark) => {
+      document.documentElement.setAttribute('data-theme', isDark ? 'default' : 'light');
+    };
+    applySystem(mq.matches);
+    mq.onchange = (e) => applySystem(e.matches);
+  } else if (t === 'default') {
     document.documentElement.removeAttribute('data-theme');
   } else {
     document.documentElement.setAttribute('data-theme', t);

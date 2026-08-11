@@ -503,8 +503,10 @@ function registerAllIpcHandlers() {
 async function processQueue() {
   if (_processQueueRunning) return;
   _processQueueRunning = true;
+  // 动态读取并发数（设置变更后实时生效）
+  const concurrency = (() => { try { const v = prefs.get('concurrency'); return (v >= 1 && v <= 10) ? v : 3; } catch (_e) { return 3; } })();
   try {
-    while (activeDownloads < MAX_CONCURRENT_DOWNLOADS) {
+    while (activeDownloads < concurrency) {
       const song = downloadQueue.find(s => s.status === 'pending');
       if (!song) break;
       song.status = 'downloading';
@@ -533,7 +535,7 @@ async function processQueue() {
     }
   } finally {
     // 如果循环正常结束（没有 pending 歌曲），重置标志
-    if (activeDownloads < MAX_CONCURRENT_DOWNLOADS) {
+    if (activeDownloads < concurrency) {
       _processQueueRunning = false;
     }
   }
@@ -578,10 +580,13 @@ async function processOneSong(song) {
       // B 站 DASH CDN 要求 Referer: https://www.bilibili.com/，否则可能 403
       // 修复 B2：用 taskId 而非 id 推送进度（前端 DOM id="prog-${taskId}"）
       const extraHeaders = urlInfo.referer ? { 'Referer': urlInfo.referer } : {};
+      // 读取限速设置（KB/s → bytes/s）
+      const speedLimitKB = prefs.get('speedLimit') || 0;
+      const speedLimit = speedLimitKB > 0 ? speedLimitKB * 1024 : 0;
       await downloadFile(urlInfo.url, savePath, (progress) => {
         song.progress = progress;
         safeSend('download-progress', { id: song.taskId, progress });
-      }, extraHeaders);
+      }, extraHeaders, 0, { speedLimit });
 
       // 歌词
       let lrc = '';

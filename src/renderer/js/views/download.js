@@ -20,6 +20,7 @@ function _cacheDlDom() {
 let _dlFilter = 'all';         // 'all' | 'active' | 'done' | 'error'
 let _dlSelectionMode = false;
 const _selectedDl = new Set(); // 存 taskId
+const _expandedDlDetails = new Set(); // 存已展开详情的 taskId
 
 // ── 筛选 ──────────────────────────────────────────────
 function setDownloadFilter(f) {
@@ -138,6 +139,13 @@ function renderQueue(queue) {
   // 最新在上
   el.innerHTML = filtered.slice(-50).reverse().map(s => {
     const selected = _selectedDl.has(s.taskId) && _dlSelectionMode;
+    const isExpanded = _expandedDlDetails.has(s.taskId);
+    // 遮罩下载链接（只显示域名和文件名）
+    const maskedUrl = s.downloadUrl ? maskUrl(s.downloadUrl) : '';
+    // 格式化文件大小
+    const fileSize = s.fileSize ? formatFileSize(s.fileSize) : '';
+    // 格式化下载耗时
+    const downloadTime = s.downloadTime ? formatDuration(s.downloadTime) : '';
     return `
     <div class="queue-item queue-status-${s.status}${selected && _dlSelectionMode ? ' selected' : ''}">
       ${_dlSelectionMode ? `
@@ -148,12 +156,13 @@ function renderQueue(queue) {
         ? `<img class="queue-cover" src="${escAttr(s.cover)}" alt="" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">`
         : ''}
       <div class="queue-cover-ph" ${s.cover ? 'style="display:none"' : ''}>🎵</div>
-      <div class="queue-info">
+      <div class="queue-info" onclick="event.stopPropagation();toggleQueueDetail('${escAttr(s.taskId)}')" style="cursor:pointer;">
         <div class="queue-title">${esc(s.title || '未知')}</div>
         <div class="queue-status status-${s.status}">${statusLabel(s.status)}${s.error ? ': ' + esc(s.error) : ''}${errorTag(s.errorCode)}</div>
         ${s.status === 'downloading' ? `
         <div class="progress-bar-wrap"><div class="progress-bar" id="prog-${escAttr(s.taskId)}" style="width:${s.progress||0}%"></div></div>` : ''}
       </div>
+      <button class="queue-detail-toggle" onclick="event.stopPropagation();toggleQueueDetail('${escAttr(s.taskId)}')" title="${isExpanded ? '收起详情' : '展开详情'}">${isExpanded ? '▾' : '▸'}</button>
       ${(!_dlSelectionMode && s.status === 'pending') ? `<button class="queue-cancel" onclick="event.stopPropagation();api.cancelDownload('${escAttr(s.taskId)}')" title="取消">✕</button>` : ''}
       ${(!_dlSelectionMode && s.status === 'done') ? `<button class="queue-cancel" style="color:var(--neon-green)" title="打开文件夹" onclick="event.stopPropagation();api.openFolder('${escAttr(getState('saveDir') || '')}')">📂</button>` : ''}
       ${(!_dlSelectionMode && s.status === 'done') ? `<button class="queue-cancel" style="color:var(--neon-cyan)" title="转换格式" onclick="event.stopPropagation();showConvertModal('${escAttr(s.savePath || '')}', '${escAttr(s.title || '')}')">🔄</button>` : ''}
@@ -161,7 +170,19 @@ function renderQueue(queue) {
         <button class="queue-cancel" style="color:var(--neon-orange)" title="重试下载" onclick="event.stopPropagation();retryQueueItem('${escAttr(s.taskId)}')">🔄</button>
         <button class="queue-cancel" title="移除" onclick="event.stopPropagation();removeQueueItem('${escAttr(s.taskId)}')">✕</button>
       ` : ''}
-    </div>`;
+    </div>
+    ${isExpanded ? `
+    <div class="queue-detail-panel">
+      <div class="queue-detail-grid">
+        ${fileSize ? `<div class="queue-detail-row"><span class="queue-detail-label">文件大小</span><span class="queue-detail-value">${fileSize}</span></div>` : ''}
+        ${downloadTime ? `<div class="queue-detail-row"><span class="queue-detail-label">下载耗时</span><span class="queue-detail-value">${downloadTime}</span></div>` : ''}
+        ${s.retries != null && s.retries > 0 ? `<div class="queue-detail-row"><span class="queue-detail-label">重试次数</span><span class="queue-detail-value">${s.retries}</span></div>` : ''}
+        ${s.savePath ? `<div class="queue-detail-row"><span class="queue-detail-label">文件路径</span><span class="queue-detail-value queue-detail-path" title="${escAttr(s.savePath)}">${esc(s.savePath)}</span></div>` : ''}
+        ${s.source ? `<div class="queue-detail-row"><span class="queue-detail-label">来源</span><span class="queue-detail-value">${esc(s.source)}${s.quality ? ' · ' + esc(s.quality) : ''}</span></div>` : ''}
+        ${maskedUrl ? `<div class="queue-detail-row"><span class="queue-detail-label">下载链接</span><span class="queue-detail-value queue-detail-url" title="${escAttr(s.downloadUrl)}">${esc(maskedUrl)}</span></div>` : ''}
+        ${s.error ? `<div class="queue-detail-row queue-detail-error"><span class="queue-detail-label">错误信息</span><span class="queue-detail-value">${esc(s.error)}</span></div>` : ''}
+      </div>
+    </div>` : ''}`;
   }).join('');
 }
 
@@ -187,6 +208,54 @@ function errorTag(errorCode) {
 }
 
 // ── 单项操作 ─────────────────────────────────────────
+async function toggleQueueDetail(taskId) {
+  if (_expandedDlDetails.has(taskId)) {
+    _expandedDlDetails.delete(taskId);
+  } else {
+    _expandedDlDetails.add(taskId);
+  }
+  const queue = getState('queueSnapshot') || [];
+  renderQueue(queue);
+}
+
+// ── 辅助格式化 ─────────────────────────────────────────
+function formatFileSize(bytes) {
+  if (bytes == null || bytes === 0) return '';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let i = 0;
+  let size = bytes;
+  while (size >= 1024 && i < units.length - 1) { size /= 1024; i++; }
+  return size.toFixed(i === 0 ? 0 : 1) + ' ' + units[i];
+}
+
+function formatDuration(ms) {
+  if (ms == null || ms === 0) return '';
+  const sec = Math.round(ms / 1000);
+  if (sec < 60) return sec + ' 秒';
+  const min = Math.floor(sec / 60);
+  const remain = sec % 60;
+  return min + ' 分 ' + (remain > 0 ? remain + ' 秒' : '');
+}
+
+function maskUrl(url) {
+  if (!url) return '';
+  try {
+    const u = new URL(url);
+    const host = u.hostname;
+    // 提取文件名部分
+    const parts = u.pathname.split('/');
+    const filename = parts[parts.length - 1];
+    if (filename.length > 20) {
+      return host + '/…' + filename.slice(-18);
+    }
+    return host + '/' + filename;
+  } catch (_e) {
+    // 非法 URL，截断显示
+    if (url.length > 40) return url.slice(0, 20) + '…' + url.slice(-16);
+    return url;
+  }
+}
+
 async function retryQueueItem(taskId) {
   try {
     const r = await api.retryDownload(taskId);
@@ -308,6 +377,7 @@ async function exportCurrentPlaylist() {
 export {
   renderQueue,
   setDownloadFilter,
+  toggleQueueDetail,
   enterDlSelectionMode,
   exitDlSelectionMode,
   toggleDlSelect,
@@ -326,6 +396,7 @@ export {
 // ── 全局桥接（HTML onclick 兼容） ──────────────────────
 window.renderQueue = renderQueue;
 window.setDownloadFilter = setDownloadFilter;
+window.toggleQueueDetail = toggleQueueDetail;
 window.enterDlSelectionMode = enterDlSelectionMode;
 window.exitDlSelectionMode = exitDlSelectionMode;
 window.toggleDlSelect = toggleDlSelect;

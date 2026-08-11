@@ -138,18 +138,22 @@
 .side-panel {
   width: 300px; flex-shrink: 0;
   display: flex; flex-direction: column;
-  height: 100%;
-  min-height: 0;
+  height: 100%; min-height: 0;
   padding: 20px 20px 20px 0;
+  gap: 0;
 }
 .side-panel .player-card {
-  flex: 1 1 0 !important;
+  flex: 1 1 0;
   min-height: 0;
   display: flex; flex-direction: column;
   border-radius: 0;
   border-right: none;
   overflow: hidden;
-  height: 100%;
+}
+/* 队列面板展开时，播放器卡片不占满全部空间 */
+.side-panel:has(.pq-panel.open) .player-card {
+  flex: 0 1 65%;
+  min-height: 280px;
 }
 
 /* 下载页面 */

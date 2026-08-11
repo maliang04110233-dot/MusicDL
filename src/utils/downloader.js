@@ -2,7 +2,44 @@ const fs = require('fs');
 const https = require('https');
 const http = require('http');
 const path = require('path');
+const { Transform } = require('stream');
 const childProcess = require('child_process');
+
+/**
+ * 限速 Transform 流
+ * 按字节/秒限速，超过时暂停读取
+ */
+function createThrottleStream(bytesPerSec) {
+  if (!bytesPerSec || bytesPerSec <= 0) return null;
+  let allowed = bytesPerSec;
+  let lastCheck = Date.now();
+  return new Transform({
+    transform(chunk, encoding, callback) {
+      const now = Date.now();
+      const elapsed = now - lastCheck;
+      if (elapsed > 100) {
+        allowed = bytesPerSec;
+        lastCheck = now;
+      }
+      if (chunk.length > allowed) {
+        // 超限：先发送允许的量，剩余延迟
+        const part = chunk.slice(0, allowed);
+        const rest = chunk.slice(allowed);
+        allowed = 0;
+        this.push(part);
+        setTimeout(() => {
+          allowed = bytesPerSec;
+          lastCheck = Date.now();
+          this.push(rest);
+          callback();
+        }, 1000);
+      } else {
+        allowed -= chunk.length;
+        callback();
+      }
+    }
+  });
+}
 
 /**
  * 找到可用的 Python 解释器（带 mutagen 库）
@@ -119,8 +156,10 @@ async function embedTagsWithPython(filePath, meta) {
  * 5. 修复 B4：增加 maxRedirects 计数器，避免 CDN 跳转链过长时栈溢出
  *    先 cleanupTmp 再递归；显式关闭当前 res 释放 socket
  */
-function downloadFile(url, savePath, onProgress, extraHeaders = {}, redirectCount = 0) {
+function downloadFile(url, savePath, onProgress, extraHeaders = {}, redirectCount = 0, options = {}) {
   const MAX_REDIRECTS = 5;
+  const speedLimit = options.speedLimit || 0; // bytes/sec, 0 = unlimited
+  const resumeOffset = options.resumeOffset || 0; // 断点续传偏移量
   return new Promise((resolve, reject) => {
     if (redirectCount > MAX_REDIRECTS) {
       return reject(new Error('重定向次数过多（' + MAX_REDIRECTS + '）'));
@@ -128,16 +167,22 @@ function downloadFile(url, savePath, onProgress, extraHeaders = {}, redirectCoun
     const parsedUrl = new URL(url);
     const lib = parsedUrl.protocol === 'https:' ? https : http;
 
-    const options = {
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win6; x64)',
+      'Accept': '*/*',
+      ...extraHeaders,
+    };
+    // 断点续传：添加 Range 头
+    if (resumeOffset > 0) {
+      headers['Range'] = `bytes=${resumeOffset}-`;
+    }
+
+    const reqOptions = {
       hostname: parsedUrl.hostname,
       port: parsedUrl.port || (parsedUrl.protocol === 'https:' ? 443 : 80),
       path: parsedUrl.pathname + parsedUrl.search,
       method: 'GET',
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
-        'Accept': '*/*',
-        ...extraHeaders,
-      },
+      headers,
       timeout: 60000,
     };
 
@@ -148,7 +193,7 @@ function downloadFile(url, savePath, onProgress, extraHeaders = {}, redirectCoun
       catch (e) { console.warn('清理 .tmp 失败:', tmpPath, e.message); }
     };
 
-    const req = lib.request(options, (res) => {
+    const req = lib.request(reqOptions, (res) => {
       // 处理重定向（修复 B4：覆盖 301/302/303/307/308，关闭当前 res 后递归）
       if (
         (res.statusCode >= 300 && res.statusCode < 400) &&
@@ -171,19 +216,27 @@ function downloadFile(url, savePath, onProgress, extraHeaders = {}, redirectCoun
       }
 
       const totalSize = parseInt(res.headers['content-length'] || '0', 10);
-      let downloaded = 0;
+      let downloaded = resumeOffset; // 断点续传：从偏移量开始计数
+      const fullSize = totalSize > 0 ? totalSize + resumeOffset : 0;
 
-      const writeStream = fs.createWriteStream(tmpPath);
+      // 断点续传：206 Partial Content 表示服务器支持
+      const isResume = res.statusCode === 206;
+      const writeFlags = (isResume && resumeOffset > 0) ? 'a' : 'w'; // 追加模式
+      const writeStream = fs.createWriteStream(tmpPath, { flags: writeFlags });
 
-      res.on('data', (chunk) => {
+      // 限速流
+      const throttle = speedLimit > 0 ? createThrottleStream(speedLimit) : null;
+      const dataStream = throttle ? res.pipe(throttle) : res;
+
+      dataStream.on('data', (chunk) => {
         downloaded += chunk.length;
-        if (totalSize > 0 && onProgress) {
-          onProgress(Math.round((downloaded / totalSize) * 100));
+        if (fullSize > 0 && onProgress) {
+          onProgress(Math.round((downloaded / fullSize) * 100));
         }
       });
 
-      res.on('error', (e) => { cleanupTmp(); reject(e); });
-      res.pipe(writeStream);
+      dataStream.on('error', (e) => { cleanupTmp(); reject(e); });
+      dataStream.pipe(writeStream);
 
       writeStream.on('finish', () => {
         fs.rename(tmpPath, savePath, (err) => {

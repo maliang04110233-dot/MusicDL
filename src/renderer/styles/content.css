@@ -398,7 +398,11 @@
 .song-checkbox {
   width: 15px; height: 15px; cursor: pointer; flex-shrink: 0;
   margin: 0 4px 0 2px; accent-color: var(--accent);
+  display: none; /* 默认隐藏，批量模式下显示 */
 }
+/* 批量选择模式：显示 checkbox */
+.batch-mode .song-checkbox { display: block; }
+.batch-mode .song-row { cursor: pointer; }
 
 /* ── 搜索历史下拉 ──────────────────────────────────── */
 .search-history {
@@ -435,6 +439,38 @@
   cursor: pointer; transition: all .15s;
 }
 .batch-btn:hover { border-color: var(--accent); color: var(--accent2); }
+.batch-btn-primary {
+  background: var(--accent); border-color: var(--accent); color: white;
+  font-weight: 500;
+}
+.batch-btn-primary:hover { background: var(--accent2); border-color: var(--accent2); }
+
+/* ── 批量操作进度条 ──────────────────────────────────── */
+.batch-progress-wrap {
+  display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  padding: 6px 12px; background: var(--bg-deep); border-radius: 8px;
+  border: 1px solid var(--neon-blue-dim);
+}
+.batch-progress-label {
+  font-size: 11.5px; color: var(--neon-dim); white-space: nowrap;
+}
+.batch-progress-track {
+  flex: 1; height: 6px; background: var(--bg-input); border-radius: 3px;
+  overflow: hidden;
+}
+.batch-progress-fill {
+  height: 100%; background: linear-gradient(90deg, var(--neon-cyan), var(--accent));
+  border-radius: 3px; transition: width 0.3s ease;
+}
+.batch-progress-text {
+  font-size: 11px; color: var(--neon-dim); white-space: nowrap; min-width: 40px;
+  text-align: right;
+}
+
+/* ── 搜索页选择按钮 ──────────────────────────────────── */
+#searchSelectBtn.active {
+  background: var(--accent); border-color: var(--accent); color: white;
+}
 
 /* ── 下载历史页 ──────────────────────────────────────── */
 .history-list { display: flex; flex-direction: column; gap: 2px; }
