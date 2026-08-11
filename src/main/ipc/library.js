@@ -15,37 +15,60 @@ const {
   writeAudioCover,
   readEmbeddedLyrics,
 } = require('../../utils/localLibrary');
+const { incrementalScan, loadIndex } = require('../../utils/libraryIndex');
 const { fetchOnlineCover } = require('../../utils/onlineCover');
 const logger = require('../../utils/logger');
 const { scheduleOnlineLrcFetch } = require('../../utils/onlineLrc');
 const { safeSend } = require('../context');
 
 function register() {
-  // 扫描本地目录
+  // 扫描本地目录（增量扫描：缓存索引 + 只处理变更文件）
   ipcMain.handle('scan-local-library', async (_, dirPath) => {
     try {
       if (!fs.existsSync(dirPath)) return { error: '目录不存在', songs: [] };
 
-      const filePaths = await scanDirectory(dirPath, (progress) => {
-        safeSend('library-scan-progress', progress);
-      });
+      // 尝试增量扫描
+      const result = await incrementalScan(
+        dirPath,
+        scanDirectory,
+        readAudioMetadata,
+        (progress) => safeSend('library-scan-progress', progress)
+      );
 
-      const songs = [];
-      const BATCH = 20;
-      for (let i = 0; i < filePaths.length; i += BATCH) {
-        const batch = filePaths.slice(i, i + BATCH);
-        const metas = await Promise.allSettled(
-          batch.map(fp => readAudioMetadata(fp))
-        );
-        for (const r of metas) {
-          if (r.status === 'fulfilled') songs.push(r.value);
-          else logger.warn('读取元数据失败:', r.reason?.message);
-        }
-        await new Promise(r => setImmediate(r));
-      }
-      return { songs, count: songs.length };
+      return { songs: result.songs, count: result.songs.length, incremental: true };
     } catch (e) {
-      return { error: e.message, songs: [] };
+      logger.warn('[Library] 增量扫描失败，回退全量扫描:', e.message);
+
+      // 回退到全量扫描
+      try {
+        const filePaths = await scanDirectory(dirPath, (progress) => {
+          safeSend('library-scan-progress', progress);
+        });
+        const songs = [];
+        const BATCH = 20;
+        for (let i = 0; i < filePaths.length; i += BATCH) {
+          const batch = filePaths.slice(i, i + BATCH);
+          const metas = await Promise.allSettled(batch.map(fp => readAudioMetadata(fp)));
+          for (const r of metas) {
+            if (r.status === 'fulfilled') songs.push(r.value);
+            else logger.warn('读取元数据失败:', r.reason?.message);
+          }
+          await new Promise(r => setImmediate(r));
+        }
+        return { songs, count: songs.length, incremental: false };
+      } catch (e2) {
+        return { error: e2.message, songs: [] };
+      }
+    }
+  });
+
+  // 读取缓存索引（启动时秒加载）
+  ipcMain.handle('load-library-index', async () => {
+    try {
+      const index = loadIndex();
+      return { songs: index.songs || [], dirPath: index.dirPath, lastScan: index.lastScan };
+    } catch (e) {
+      return { songs: [], dirPath: '', lastScan: 0 };
     }
   });
 

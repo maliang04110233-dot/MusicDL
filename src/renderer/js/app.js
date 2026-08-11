@@ -68,6 +68,7 @@ const api = window.musicAPI || {
   verifyCookie: async () => ({ valid: false }),
   openLoginWindow: async () => ({ success: false, error: '开发模式不支持一键登录' }),
   scanLocalLibrary: async () => ({ songs: mockLocalSongs(), count: 3 }),
+  loadLibraryIndex: async () => ({ songs: mockLocalSongs(), dirPath: '', lastScan: 0 }),
   readLocalMetadata: async () => ({}),
   readLocalLrc: async () => ({ lrc: '' }),
   updateId3Tags: async () => ({ success: true }),
