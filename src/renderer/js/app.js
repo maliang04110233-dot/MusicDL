@@ -138,6 +138,14 @@ async function init() {
       if (savedTheme && typeof applyTheme === 'function') applyTheme(savedTheme);
     } catch (_e) { /* 主题恢复失败使用默认 */ }
 
+    // 恢复命名模板
+    const savedTemplate = await api.getPref('namingTemplate');
+    if (savedTemplate) {
+      setState('namingTemplate', savedTemplate);
+      const tplInput = document.getElementById('namingTemplateInput');
+      if (tplInput) tplInput.value = savedTemplate;
+    }
+
     const savedLocalDir = await api.getPref('localDirPath');
     if (savedLocalDir) setState('localDirPath', savedLocalDir);
 
@@ -418,6 +426,19 @@ async function changeSaveDir() {
     document.getElementById('saveDirText').textContent = d;
     await api.setPref('saveDir', d);
   }
+}
+
+// ── 命名模板 ──────────────────────────────────────────
+async function saveNamingTemplate(template) {
+  await api.setPref('namingTemplate', template);
+  setState('namingTemplate', template);
+  showToast('命名模板已保存', 'success', 1500);
+}
+
+function resetNamingTemplate() {
+  const input = document.getElementById('namingTemplateInput');
+  if (input) input.value = '{artist} - {title}';
+  saveNamingTemplate('{artist} - {title}');
 }
 
 // ── 歌单弹层 ──────────────────────────────────────────
@@ -730,6 +751,8 @@ window.addSingleToQueue = addSingleToQueue;
 window.addPlaylistToQueueClick = addPlaylistToQueueClick;
 window.downloadSongFromList = downloadSongFromList;
 window.openAlbumView = openAlbumView;
+window.saveNamingTemplate = saveNamingTemplate;
+window.resetNamingTemplate = resetNamingTemplate;
 
 // ── 启动入口（ES Module 自动 defer，DOM 已就绪）───────
 // ESM 脚本默认 defer，DOMContentLoaded 触发时脚本已执行完毕

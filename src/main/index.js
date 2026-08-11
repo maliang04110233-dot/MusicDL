@@ -7,6 +7,7 @@ const { downloadFile, embedId3Tags } = require('../utils/downloader');
 const cookieStore = require('../utils/cookieStore');
 const { setOnlineLrcNotifier } = require('../utils/onlineLrc');
 const { getDownloadUrl, getLyrics } = require('../api');
+const { renderFileName } = require('../utils/naming');
 const { init: initContext, safeSend: ctxSafeSend } = require('./context');
 const playCache = require('./playCache');
 const history = require('../utils/history');
@@ -563,7 +564,10 @@ async function processOneSong(song) {
       }
 
       const ext = (urlInfo.ext || 'mp3').replace(/[^a-zA-Z0-9]/g, '').substring(0, 10) || 'mp3';
-      const savePath = path.join(song.saveDir, sanitizeFilename(`${song.artist} - ${song.title}.${ext}`));
+      // 命名模板：从 preferences 读取，支持 {title} {artist} {album} {source} {id}
+      const { get: getPref } = require('../utils/prefs');
+      const namingTemplate = getPref('namingTemplate') || '{artist} - {title}';
+      const savePath = path.join(song.saveDir, sanitizeFilename(renderFileName(namingTemplate, song, ext)));
 
       await fs.promises.mkdir(song.saveDir, { recursive: true }).catch(e => {
         logger.warn('[processOneSong] 创建下载目录失败:', song.saveDir, e.message);

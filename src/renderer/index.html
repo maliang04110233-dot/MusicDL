@@ -97,6 +97,15 @@
       <div class="save-dir-path" id="saveDirText">加载中...</div>
       <button class="btn-sm" onclick="changeSaveDir()">更改目录</button>
     </div>
+
+    <div class="save-dir" style="margin-top:8px;">
+      <label>命名模板</label>
+      <div style="display:flex;gap:4px;align-items:center;">
+        <input type="text" id="namingTemplateInput" class="save-dir-path" style="flex:1;font-size:11px;padding:4px 8px;background:var(--bg-input);border:1px solid var(--border);border-radius:4px;color:var(--text);" placeholder="{artist} - {title}" onchange="saveNamingTemplate(this.value)">
+        <button class="btn-sm" onclick="resetNamingTemplate()" title="恢复默认">↺</button>
+      </div>
+      <div style="font-size:10px;color:var(--text-dim);margin-top:2px;">变量: {title} {artist} {album} {source} {id}</div>
+    </div>
   </div>
 
   <!-- 内容区 -->
