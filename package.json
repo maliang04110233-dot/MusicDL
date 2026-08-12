@@ -7,7 +7,8 @@
     "dev": "vite",
     "start": "electron .",
     "build": "vite build && node scripts/postbuild.js",
-    "dist": "vite build && electron-builder",
+    "package": "vite build && node scripts/postbuild.js && electron-builder --config build/config.cjs --win --x64",
+    "publish": "vite build && node scripts/postbuild.js && electron-builder --config build/config.cjs --publish always",
     "postinstall": "electron-builder install-app-deps",
     "test": "node --test test\\cookie.test.js test\\parseFilename.test.js test\\request.test.js test\\recommendations.test.js test\\prefs.test.js test\\checkLocal.test.js test\\history.test.js",
     "lint": "eslint src/ test/"
@@ -38,35 +39,6 @@
   },
   "overrides": {},
   "build": {
-    "appId": "com.musicdl.app",
-    "productName": "音乐下载器",
-    "directories": {
-      "output": "dist"
-    },
-    "files": [
-      "dist/**/*",
-      "assets/**/*",
-      "package.json",
-      "!**/node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}",
-      "!**/node_modules/*/{test,__tests__,tests,powered-test,example,examples}",
-      "!**/node_modules/*.d.ts",
-      "!**/node_modules/.bin"
-    ],
-    "extraResources": [
-      {
-        "from": "scripts/",
-        "to": "scripts/",
-        "filter": [
-          "**/*"
-        ]
-      }
-    ],
-    "win": {
-      "target": "nsis",
-      "icon": "assets/icon.ico"
-    },
-    "mac": {
-      "target": "dmg"
-    }
+    "extends": null
   }
 }

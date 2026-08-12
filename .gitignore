@@ -19,3 +19,9 @@ Thumbs.db
 
 # OS
 Desktop.ini
+
+# Build output
+release/
+*.blockmap
+*.yml
+build-log.txt
