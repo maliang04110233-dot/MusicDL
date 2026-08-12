@@ -31,6 +31,8 @@ import './views/playlist.js';
 
 // 初始化模块（export 引入，供后续使用）
 import { persistPlayQueue } from './init.js';
+import './i18n.js';
+import './logger.js';
 
 // ── API 代理 / Mock ───────────────────────────────────
 const api = window.musicAPI || {
@@ -138,6 +140,12 @@ async function init() {
       const savedTheme = await api.getPref('theme');
       if (savedTheme && typeof applyTheme === 'function') applyTheme(savedTheme);
     } catch (_e) { /* 主题恢复失败使用默认 */ }
+
+    // 加载语言包并应用翻译
+    try {
+      const savedLang = await api.getPref('language') || 'zh';
+      if (window.i18n) { window.i18n.loadLanguage(savedLang); window.i18n.applyTranslations(); }
+    } catch (_e) { /* 忽略 */ }
 
     // 恢复命名模板
     const savedTemplate = await api.getPref('namingTemplate');

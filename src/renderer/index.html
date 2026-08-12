@@ -803,6 +803,14 @@
             </select>
           </div>
 
+          <div class="setting-row">
+            <label class="setting-label">🌐 语言</label>
+            <select class="setting-select" id="settingLanguage" onchange="window.i18n && window.i18n.loadLanguage(this.value); window.i18n && window.i18n.applyTranslations();">
+              <option value="zh">中文</option>
+              <option value="en">English</option>
+            </select>
+          </div>
+
           <div class="settings-section-title" style="margin-top:20px">🎵 播放器</div>
 
           <div class="setting-row">
