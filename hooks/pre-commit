@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# MusicDL pre-commit hook
+# 自动递增 package.json version（patch）
+
+# 如果 package.json 没有变化，跳过
+if ! git diff --cached --name-only | grep -q '^package.json$'; then
+  node "$(dirname "$0")/../scripts/version-bump.js"
+fi
+
+exit 0
