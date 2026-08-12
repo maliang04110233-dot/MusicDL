@@ -36,6 +36,7 @@ import './logger.js';
 
 // ── API 代理 / Mock ───────────────────────────────────
 const api = window.musicAPI || {
+  getVersion: async () => (window.__APP_VERSION__ || '1.0.0') + (window.__APP_COMMIT__ ? ' (' + window.__APP_COMMIT__.slice(0, 7) + ')' : ''),
   searchMusic: async (k, s) => ({ songs: mockSongs(k, s), source: s }),
   searchAlbum: async () => ({ albums: [], total: 0 }),
   searchSinger: async () => ({ singers: [], total: 0 }),
@@ -145,6 +146,17 @@ async function init() {
     try {
       const savedLang = await api.getPref('language') || 'zh';
       if (window.i18n) { window.i18n.loadLanguage(savedLang); window.i18n.applyTranslations(); }
+    } catch (_e) { /* 忽略 */ }
+
+    // 显示版本号 + commit
+    try {
+      const versionEl = document.getElementById('appVersion');
+      const commitEl = document.getElementById('appCommit');
+      const ver = await api.getVersion();
+      if (versionEl) versionEl.textContent = ver;
+      if (window.__APP_COMMIT__ && commitEl) {
+        commitEl.textContent = 'commit ' + window.__APP_COMMIT__.slice(0, 7);
+      }
     } catch (_e) { /* 忽略 */ }
 
     // 恢复命名模板
