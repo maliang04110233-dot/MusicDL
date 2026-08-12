@@ -33,6 +33,7 @@ import './views/playlist.js';
 import { persistPlayQueue } from './init.js';
 import './i18n.js';
 import './logger.js';
+import './updater.js';
 
 // ── API 代理 / Mock ───────────────────────────────────
 const api = window.musicAPI || {
@@ -99,6 +100,8 @@ const api = window.musicAPI || {
   savePlayQueue: async () => ({ ok: true }),
   loadPlayQueue: async () => ({ queue: [] }),
   onPlayQueueRestored: () => {},
+  checkForUpdate: async () => ({ success: true }),
+  restartAndInstall: () => {},
 };
 
 // Mock 数据生成

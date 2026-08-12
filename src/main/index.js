@@ -407,6 +407,14 @@ app.whenReady().then(async () => {
   // 注册所有 IPC handler（按职责拆分到 src/main/ipc/*.js）
   registerAllIpcHandlers();
 
+  // 初始化自动更新（GitHub Releases）
+  try {
+    const { initUpdater } = require('./updater');
+    initUpdater();
+  } catch (_e) {
+    console.warn('[Updater] init failed:', _e.message);
+  }
+
   // 定期 GC play_cache（10 分钟一次，.unref() 不阻塞进程退出）
   const gcTimer = setInterval(playCache.cleanupExpired, playCache.PLAY_CACHE_GC_INTERVAL);
   if (gcTimer.unref) gcTimer.unref();

@@ -45,8 +45,8 @@
   <div class="titlebar-left">
     <div class="app-logo">🎵</div>
     <div>
-      <div class="app-title">MusicDL</div>
-      <div class="app-subtitle">网易云 · QQ音乐 · 哔哩哔哩</div>
+      <div class="app-title" data-i18n="app.title">MusicDL</div>
+      <div class="app-subtitle" data-i18n="app.subtitle">网易云 · QQ音乐 · 哔哩哔哩</div>
     </div>
   </div>
   <div class="winctrls">
@@ -61,7 +61,7 @@
 
   <!-- 侧边栏 -->
   <div class="sidebar">
-    <div class="sidebar-title">导航</div>
+    <div class="sidebar-title" data-i18n="nav.sidebar.title">导航</div>
     <button class="nav-item active" data-tab="home" onclick="switchTab('home',this)">
       <span class="icon">🏠</span> 首页
     </button>
@@ -84,7 +84,7 @@
       <span class="icon">🔄</span> 格式转换
     </button>
 
-    <div class="sidebar-title">操作</div>
+    <div class="sidebar-title" data-i18n="nav.operations.title">操作</div>
     <button class="nav-item" onclick="api.openFolder(getState('saveDir'))">
       <span class="icon">📥</span> 打开下载目录
     </button>
@@ -93,13 +93,13 @@
     </button>
 
     <div class="save-dir">
-      <label>下载目录</label>
+      <label data-i18n="sidebar.downloadDir">下载目录</label>
       <div class="save-dir-path" id="saveDirText">加载中...</div>
-      <button class="btn-sm" onclick="changeSaveDir()">更改目录</button>
+      <button class="btn-sm" onclick="changeSaveDir()" data-i18n="sidebar.changeDir">更改目录</button>
     </div>
 
     <div class="save-dir" style="margin-top:8px;">
-      <label>命名模板</label>
+      <label data-i18n="sidebar.namingTemplate">命名模板</label>
       <div style="display:flex;gap:4px;align-items:center;">
         <input type="text" id="namingTemplateInput" class="save-dir-path" style="flex:1;font-size:11px;padding:4px 8px;background:var(--bg-input);border:1px solid var(--border);border-radius:4px;color:var(--text);" placeholder="{artist} - {title}" onchange="saveNamingTemplate(this.value)">
         <button class="btn-sm" onclick="resetNamingTemplate()" title="恢复默认">↺</button>
@@ -117,8 +117,8 @@
     <div id="homePage" style="display:flex;flex-direction:column;gap:16px;height:100%;overflow-y:auto;padding-right:4px;">
       <!-- 欢迎横幅 -->
       <div class="welcome-banner" style="margin-top:8px;">
-        <div class="welcome-title">🎵 发现好音乐，随时随地下载</div>
-        <div class="welcome-subtitle">支持网易云音乐、QQ音乐、哔哩哔哩三大平台，一键搜索下载，支持无损品质。</div>
+        <div class="welcome-title" data-i18n="home.welcome.title">🎵 发现好音乐，随时随地下载</div>
+        <div class="welcome-subtitle" data-i18n="home.welcome.subtitle">支持网易云音乐、QQ音乐、哔哩哔哩三大平台，一键搜索下载，支持无损品质。</div>
         <div class="welcome-platforms">
           <div class="platform-chip"><span class="dot dot-netease"></span>网易云音乐</div>
           <div class="platform-chip"><span class="dot dot-qq"></span>QQ 音乐</div>
@@ -129,7 +129,7 @@
 
       <!-- 热门搜索 -->
       <div class="hot-section">
-        <div class="hot-section-title">🔥 热门搜索</div>
+        <div class="hot-section-title" data-i18n="home.hotSearch">🔥 热门搜索</div>
         <div class="hot-tags">
           <span class="hot-tag trending" onclick="quickSearch('周杰伦')">周杰伦</span>
           <span class="hot-tag trending" onclick="quickSearch('林俊杰')">林俊杰</span>
@@ -146,13 +146,13 @@
 
       <!-- 最近播放 -->
       <div class="hot-section" id="recentlyPlayedSection" style="display:none;">
-        <div class="hot-section-title">⏱️ 最近播放 <button class="section-clear-btn" onclick="clearRecentlyPlayed()">清空</button></div>
+        <div class="hot-section-title">⏱️ 最近播放 <button class="section-clear-btn" onclick="clearRecentlyPlayed()" data-i18n="home.clear">清空</button></div>
         <div class="recent-list" id="recentlyPlayedList"></div>
       </div>
 
       <!-- 平台推荐 -->
       <div class="recommend-section">
-        <div class="hot-section-title">🎵 平台推荐</div>
+        <div class="hot-section-title" data-i18n="home.platformRec">🎵 平台推荐</div>
 
         <!-- 平台切换标签 -->
         <div class="platform-tabs">
@@ -166,11 +166,11 @@
         <!-- 网易云面板 -->
         <div class="plat-panel" id="platNeteasePanel">
           <div class="rec-subtabs" id="neteaseSubTabs">
-            <button class="rec-subtab active" data-type="tops" onclick="switchNeteaseSub('tops',this)">飙升榜</button>
-            <button class="rec-subtab" data-type="hot" onclick="switchNeteaseSub('hot',this)">热歌榜</button>
-            <button class="rec-subtab" data-type="new" onclick="switchNeteaseSub('new',this)">新歌榜</button>
-            <button class="rec-subtab" data-type="original" onclick="switchNeteaseSub('original',this)">原创榜</button>
-            <button class="rec-subtab" data-type="playlists" onclick="switchNeteaseSub('playlists',this)">推荐歌单</button>
+            <button class="rec-subtab active" data-type="tops" onclick="switchNeteaseSub('tops',this)" data-i18n="home.subtab.tops">飙升榜</button>
+            <button class="rec-subtab" data-type="hot" onclick="switchNeteaseSub('hot',this)" data-i18n="home.subtab.hot">热歌榜</button>
+            <button class="rec-subtab" data-type="new" onclick="switchNeteaseSub('new',this)" data-i18n="home.subtab.new">新歌榜</button>
+            <button class="rec-subtab" data-type="original" onclick="switchNeteaseSub('original',this)" data-i18n="home.subtab.original">原创榜</button>
+            <button class="rec-subtab" data-type="playlists" onclick="switchNeteaseSub('playlists',this)" data-i18n="home.subtab.playlists">推荐歌单</button>
           </div>
           <div id="neteaseTopsPanel">
             <div class="top-songs-list" id="neteaseTopsList"><div class="loading"><div class="spinner"></div> 加载中...</div></div>
@@ -234,16 +234,16 @@
           <!-- 搜索栏 -->
           <div class="search-bar" style="position:relative;">
             <div class="search-source-tabs">
-              <button class="tab active" data-src="all" onclick="switchSource('all',this)">全部</button>
-              <button class="tab" data-src="netease" onclick="switchSource('netease',this)">网易云</button>
-              <button class="tab" data-src="qq" onclick="switchSource('qq',this)">QQ音乐</button>
-              <button class="tab" data-src="kugou" onclick="switchSource('kugou',this)">酷狗</button>
-              <button class="tab" data-src="bilibili" onclick="switchSource('bilibili',this)">B站</button>
+              <button class="tab active" data-src="all" onclick="switchSource('all',this)" data-i18n="search.all">全部</button>
+              <button class="tab" data-src="netease" onclick="switchSource('netease',this)" data-i18n="home.neteaseTab">网易云</button>
+              <button class="tab" data-src="qq" onclick="switchSource('qq',this)" data-i18n="home.qqTab">QQ音乐</button>
+              <button class="tab" data-src="kugou" onclick="switchSource('kugou',this)" data-i18n="search.kugou">酷狗</button>
+              <button class="tab" data-src="bilibili" onclick="switchSource('bilibili',this)" data-i18n="home.biliTab">B站</button>
             </div>
             <div class="search-type-tabs">
-                          <button class="tab active" data-type="song" onclick="switchSearchType('song',this)">🎵 单曲</button>
-                          <button class="tab" data-type="album" onclick="switchSearchType('album',this)">💿 专辑</button>
-                          <button class="tab" data-type="singer" onclick="switchSearchType('singer',this)">🎤 歌手</button>
+                          <button class="tab active" data-type="song" onclick="switchSearchType('song',this)" data-i18n="search.single">🎵 单曲</button>
+                          <button class="tab" data-type="album" onclick="switchSearchType('album',this)" data-i18n="search.album">💿 专辑</button>
+                          <button class="tab" data-type="singer" onclick="switchSearchType('singer',this)" data-i18n="search.singer">🎤 歌手</button>
                         </div>
                         <div class="search-input-wrap">
               <input class="search-input" id="searchInput" placeholder="搜索歌曲、歌手、专辑..."
@@ -251,11 +251,11 @@
               <button class="search-btn" onclick="doSearch()">🔍</button>
             </div>
             <select class="quality-select" id="qualitySelect">
-              <option value="standard">标准 128k</option>
-              <option value="hq">高品质 320k</option>
-              <option value="lossless">无损 FLAC</option>
+              <option value="standard" data-i18n="search.quality.standard">标准 128k</option>
+              <option value="hq" data-i18n="search.quality.hq">高品质 320k</option>
+              <option value="lossless" data-i18n="search.quality.lossless">无损 FLAC</option>
             </select>
-            <button class="tab tab-neon" id="searchSelectBtn" onclick="enterSearchBatchMode()">☑ 选择</button>
+            <button class="tab tab-neon" id="searchSelectBtn" onclick="enterSearchBatchMode()" data-i18n="local.select">☑ 选择</button>
             <!-- 搜索历史下拉 -->
             <div class="search-history" id="searchHistory" style="display:none;"></div>
           </div>
@@ -268,8 +268,8 @@
               <div class="song-list" id="songList">
                 <div class="empty-state" id="welcomeScreen">
                   <div class="empty-icon">🎵</div>
-                  <div class="empty-text">输入关键词开始搜索</div>
-                  <div class="empty-hint">支持歌名、歌手、专辑，三大平台同时检索</div>
+                  <div class="empty-text" data-i18n="search.welcome.text">输入关键词开始搜索</div>
+                  <div class="empty-hint" data-i18n="search.welcome.hint">支持歌名、歌手、专辑，三大平台同时检索</div>
                 </div>
               </div>
               <div class="pagination" id="pagination" style="display:none;"></div>
@@ -277,16 +277,16 @@
               <div class="batch-toolbar" id="batchToolbar" style="display:none;">
                 <label class="batch-check-label">
                   <input type="checkbox" id="selectAllSongs" onchange="toggleSelectAllSongs(this.checked)">
-                  <span>全选</span>
+                  <span data-i18n="search.selectAll">全选</span>
                 </label>
                 <span class="batch-info" id="batchInfo">已选 0 首</span>
-                <button class="batch-btn batch-btn-primary" onclick="batchDownload()">⬇ 加入下载队列</button>
-                <button class="batch-btn" onclick="batchPlay()">▶ 批量播放</button>
-                <button class="batch-btn" onclick="exitSearchBatchMode()" style="margin-left:auto;">✕ 取消选择</button>
+                <button class="batch-btn batch-btn-primary" onclick="batchDownload()" data-i18n="search.batchDownload">⬇ 加入下载队列</button>
+                <button class="batch-btn" onclick="batchPlay()" data-i18n="search.batchPlay">▶ 批量播放</button>
+                <button class="batch-btn" onclick="exitSearchBatchMode()" style="margin-left:auto;" data-i18n="search.batchCancel">✕ 取消选择</button>
               </div>
               <!-- 批量操作进度条 -->
               <div class="batch-progress-wrap" id="batchProgressWrap" style="display:none;">
-                <div class="batch-progress-label" id="batchProgressLabel">正在添加到队列...</div>
+                <div class="batch-progress-label" id="batchProgressLabel" data-i18n="search.addingToQueue">正在添加到队列...</div>
                 <div class="batch-progress-track">
                   <div class="batch-progress-fill" id="batchProgressFill" style="width:0%"></div>
                 </div>
@@ -301,35 +301,35 @@
                   <!-- 本地库页面 -->
               <div id="localPage" class="local-page">
           <div class="local-toolbar">
-                      <button class="tab" onclick="scanLocalDir()">📂 扫描目录</button>
-                      <button class="tab tab-neon" onclick="batchAutoMeta()" style="background:linear-gradient(135deg,var(--neon-cyan),var(--neon-blue));color:#fff;border:none;">⚡ 一键补全</button>
-                      <button class="tab tab-neon" onclick="batchFetchCovers()">🖼️ 批量补封面</button>
-                      <button class="tab tab-neon" id="localSelectBtn" onclick="enterLocalSelectionMode()">☑ 选择</button>
-            <button class="tab tab-neon" id="localViewToggleBtn" onclick="toggleLocalView()">▦ 网格</button>
-            <button class="tab tab-neon" onclick="batchFetchLyrics()">🎵 批量补歌词</button>
-                      <button class="tab" onclick="showLibraryStats()">📊 统计</button>
-                      <button class="tab" onclick="detectDuplicateSongs()">🔍 查重</button>
-                      <button class="tab tab-neon" onclick="convertSelectedAudio()">🔄 转码</button>
+                      <button class="tab" onclick="scanLocalDir()" data-i18n="local.scanDir">📂 扫描目录</button>
+                      <button class="tab tab-neon" onclick="batchAutoMeta()" style="background:linear-gradient(135deg,var(--neon-cyan),var(--neon-blue));color:#fff;border:none;" data-i18n="local.batchAutoMeta">⚡ 一键补全</button>
+                      <button class="tab tab-neon" onclick="batchFetchCovers()" data-i18n="local.batchCover">🖼️ 批量补封面</button>
+                      <button class="tab tab-neon" id="localSelectBtn" onclick="enterLocalSelectionMode()" data-i18n="local.select">☑ 选择</button>
+            <button class="tab tab-neon" id="localViewToggleBtn" onclick="toggleLocalView()" data-i18n="local.grid">▦ 网格</button>
+            <button class="tab tab-neon" onclick="batchFetchLyrics()" data-i18n="local.batchLyric">🎵 批量补歌词</button>
+                      <button class="tab" onclick="showLibraryStats()" data-i18n="local.stats">📊 统计</button>
+                      <button class="tab" onclick="detectDuplicateSongs()" data-i18n="local.dedup">🔍 查重</button>
+                      <button class="tab tab-neon" onclick="convertSelectedAudio()" data-i18n="local.convert">🔄 转码</button>
                       <div class="search-input-wrap">
                         <input class="search-input" id="localFilter" placeholder="过滤本地歌曲..."
                           oninput="filterLocalSongs()" onkeydown="if(event.key==='Enter')filterLocalSongs()">
                       </div>
-                      <span class="local-info" id="localInfo">未扫描</span>
+                      <span class="local-info" id="localInfo" data-i18n="local.notScanned">未扫描</span>
                     </div>
                     <!-- 批量选择操作栏 -->
                     <div id="localSelectionBar" class="local-selection-bar" style="display:none">
                       <span class="local-sel-count">已选 <b id="localSelectionCount">0</b> 首</span>
-                      <button class="tab" onclick="selectAllLocal()">全选</button>
-                      <button class="tab" onclick="deselectAllLocal()">取消全选</button>
+                      <button class="tab" onclick="selectAllLocal()" data-i18n="search.selectAll">全选</button>
+                      <button class="tab" onclick="deselectAllLocal()" data-i18n="local.deselectAll">取消全选</button>
                       <div style="flex:1"></div>
-                      <button class="tab tab-neon" onclick="openBatchEdit()">✏️ 批量编辑</button>
-                      <button class="tab tab-neon" onclick="openBatchRename()">📝 批量重命名</button>
-                      <button class="tab" onclick="exitLocalSelectionMode()">完成</button>
+                      <button class="tab tab-neon" onclick="openBatchEdit()" data-i18n="local.batchEdit">✏️ 批量编辑</button>
+                      <button class="tab tab-neon" onclick="openBatchRename()" data-i18n="local.batchRename">📝 批量重命名</button>
+                      <button class="tab" onclick="exitLocalSelectionMode()" data-i18n="local.done">完成</button>
                     </div>
           <div id="batchProgressWrap" class="batch-progress-wrap" style="display:none">
-            <div id="batchProgressLabel" class="batch-progress-label">正在补全封面...</div>
+            <div id="batchProgressLabel" class="batch-progress-label" data-i18n="local.completingCover">正在补全封面...</div>
             <div id="batchProgressBar" class="batch-progress-bar"></div>
-            <button class="tab" onclick="cancelBatchFetch()" style="flex-shrink:0;padding:3px 10px;font-size:11px">取消</button>
+            <button class="tab" onclick="cancelBatchFetch()" style="flex-shrink:0;padding:3px 10px;font-size:11px" data-i18n="local.cancel">取消</button>
           </div>
           <div class="local-list" id="localList"></div>
                     <div class="local-grid" id="localGrid" style="display:none"></div>
@@ -338,66 +338,66 @@
     <!-- 下载页面 -->
         <div id="downloadPage" class="download-page" style="display:none;flex-direction:column;gap:12px;padding:4px 0;height:100%;min-height:0;overflow:hidden;">
           <div class="download-header" style="display:flex;align-items:center;gap:10px;flex-shrink:0;flex-wrap:wrap;">
-            <div style="font-size:16px;font-weight:600;">⬇ 下载队列</div>
+            <div style="font-size:16px;font-weight:600;" data-i18n="download.title">⬇ 下载队列</div>
             <span class="panel-badge" id="queueBadge">0</span>
             <!-- 状态筛选标签 -->
             <div class="filter-tabs" id="downloadFilterTabs">
-              <button class="filter-tab active" onclick="setDownloadFilter('all')">全部</button>
-              <button class="filter-tab" onclick="setDownloadFilter('active')">下载中</button>
-              <button class="filter-tab" onclick="setDownloadFilter('done')">已完成</button>
-              <button class="filter-tab" onclick="setDownloadFilter('error')">失败</button>
+              <button class="filter-tab active" onclick="setDownloadFilter('all')" data-i18n="search.all">全部</button>
+              <button class="filter-tab" onclick="setDownloadFilter('active')" data-i18n="download.filterActive">下载中</button>
+              <button class="filter-tab" onclick="setDownloadFilter('done')" data-i18n="download.filterDone">已完成</button>
+              <button class="filter-tab" onclick="setDownloadFilter('error')" data-i18n="download.filterError">失败</button>
             </div>
             <div style="flex:1"></div>
             <button class="tab tab-neon" id="dlSelectBtn" onclick="enterDlSelectionMode()">☑ 选择</button>
-            <button class="tab" onclick="clearFinishedDownloads()">🗑 清空已完成</button>
-            <button class="tab" onclick="clearAllDownloads()">🗑 清空全部</button>
-            <button class="tab tab-neon" onclick="retryAllFailed()">🔄 重试所有失败</button>
-            <button class="tab" onclick="openSaveDir()">📂 打开目录</button>
-            <button class="tab tab-neon" onclick="exportCurrentPlaylist()">📤 导出列表</button>
+            <button class="tab" onclick="clearFinishedDownloads()" data-i18n="download.clearDone">🗑 清空已完成</button>
+            <button class="tab" onclick="clearAllDownloads()" data-i18n="download.clearAll">🗑 清空全部</button>
+            <button class="tab tab-neon" onclick="retryAllFailed()" data-i18n="download.retryFailed">🔄 重试所有失败</button>
+            <button class="tab" onclick="openSaveDir()" data-i18n="download.openDir">📂 打开目录</button>
+            <button class="tab tab-neon" onclick="exportCurrentPlaylist()" data-i18n="download.exportList">📤 导出列表</button>
           </div>
           <!-- 选择操作栏 -->
           <div id="dlSelectionBar" class="dl-selection-bar" style="display:none">
             <span class="dl-sel-count">已选 <b id="dlSelectionCount">0</b> 项</span>
             <button class="tab" onclick="selectAllDl()">全选</button>
-            <button class="tab" onclick="deselectAllDl()">取消全选</button>
+            <button class="tab" onclick="deselectAllDl()" data-i18n="local.deselectAll">取消全选</button>
             <div style="flex:1"></div>
-            <button class="tab" onclick="batchRetryDl()">🔄 批量重试</button>
-            <button class="tab" onclick="batchRemoveDl()">🗑 批量删除</button>
-            <button class="tab" onclick="exitDlSelectionMode()">完成</button>
+            <button class="tab" onclick="batchRetryDl()" data-i18n="download.batchRetry">🔄 批量重试</button>
+            <button class="tab" onclick="batchRemoveDl()" data-i18n="download.batchRemove">🗑 批量删除</button>
+            <button class="tab" onclick="exitDlSelectionMode()" data-i18n="local.done">完成</button>
           </div>
           <div id="queueList" class="queue-list" style="flex:1 1 0;overflow-y:auto;min-height:0;max-height:none;">
-            <div class="queue-empty">暂无下载任务</div>
+            <div class="queue-empty" data-i18n="download.empty">暂无下载任务</div>
           </div>
         </div>
 
     <!-- 下载历史页面 -->
     <div id="historyPage" style="display:none;flex-direction:column;gap:12px;height:100%;">
       <div class="history-header" style="display:flex;align-items:center;gap:12px;flex-shrink:0;">
-        <div style="font-size:16px;font-weight:600;">📜 下载历史</div>
+        <div style="font-size:16px;font-weight:600;" data-i18n="history.title">📜 下载历史</div>
         <div class="search-input-wrap" style="max-width:250px;">
           <input class="search-input" id="historyFilter" placeholder="搜索历史..."
             oninput="filterHistory()" onkeydown="if(event.key==='Enter')filterHistory()">
         </div>
-        <span class="panel-badge" id="historyInfo">加载中...</span>
+        <span class="panel-badge" id="historyInfo" data-i18n="history.loading">加载中...</span>
         <div style="flex:1"></div>
-        <button class="tab" onclick="clearAllHistory()">🗑 清空历史</button>
+        <button class="tab" onclick="clearAllHistory()" data-i18n="history.clearAll">🗑 清空历史</button>
       </div>
       <div id="historyList" class="history-list" style="flex:1;overflow-y:auto;">
         <div class="loading"><div class="spinner"></div> 加载中...</div>
       </div>
       <div class="history-pagination" id="historyPagination" style="display:flex;gap:8px;flex-shrink:0;">
-        <button class="page-btn" onclick="historyPrevPage()">上一页</button>
-        <button class="page-btn" onclick="historyNextPage()">下一页</button>
+        <button class="page-btn" onclick="historyPrevPage()" data-i18n="history.prevPage">上一页</button>
+        <button class="page-btn" onclick="historyNextPage()" data-i18n="history.nextPage">下一页</button>
       </div>
     </div>
 
     <!-- AI 音乐页面 -->
     <div id="aiMusicPage" style="display:none;flex-direction:column;height:100%;padding:16px;">
       <div class="ai-header">
-        <div class="ai-title">🤖 AI 音乐创作</div>
+        <div class="ai-title" data-i18n="aiMusic.title">🤖 AI 音乐创作</div>
         <div class="ai-tabs">
-          <button class="ai-tab active" data-tab="create" onclick="switchAiTab('create')">✨ 创作</button>
-          <button class="ai-tab" data-tab="history" onclick="switchAiTab('history')">📜 历史</button>
+          <button class="ai-tab active" data-tab="create" onclick="switchAiTab('create')" data-i18n="aiMusic.tabCreate">✨ 创作</button>
+          <button class="ai-tab" data-tab="history" onclick="switchAiTab('history')" data-i18n="aiMusic.tabHistory">📜 历史</button>
         </div>
       </div>
       <div id="aiMusicContent" class="ai-content"></div>
@@ -408,17 +408,17 @@
       <div style="display:flex;align-items:center;gap:12px;">
         <span style="font-size:24px;">🔄</span>
         <div>
-          <div style="font-size:18px;font-weight:600;">音频格式转换</div>
-          <div style="font-size:12px;color:var(--neon-dim);">搜索本地歌曲，一键批量转换格式</div>
+          <div style="font-size:18px;font-weight:600;" data-i18n="converter.title">音频格式转换</div>
+          <div style="font-size:12px;color:var(--neon-dim);" data-i18n="converter.subtitle">搜索本地歌曲，一键批量转换格式</div>
         </div>
       </div>
 
       <!-- 搜索栏 + 扫描按钮 -->
       <div style="display:flex;gap:10px;align-items:center;">
         <input type="text" id="converterSearch" placeholder="🔍 搜索歌曲..." style="flex:1;background:var(--bg-input);border:1px solid var(--border);border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;">
-        <button onclick="window._converterScan()" style="background:var(--neon-blue);border:none;border-radius:8px;padding:10px 16px;color:#fff;font-size:13px;cursor:pointer;white-space:nowrap;">📂 扫描</button>
-        <button onclick="window._converterSearch()" style="background:var(--neon-cyan);border:none;border-radius:8px;padding:10px 16px;color:#000;font-size:13px;cursor:pointer;white-space:nowrap;">🔍 搜索</button>
-        <button onclick="window._converterAddQueue()" style="background:var(--neon-blue);border:none;border-radius:8px;padding:10px 16px;color:#fff;font-size:13px;cursor:pointer;white-space:nowrap;">+ 添加</button>
+        <button onclick="window._converterScan()" style="background:var(--neon-blue);border:none;border-radius:8px;padding:10px 16px;color:#fff;font-size:13px;cursor:pointer;white-space:nowrap;" data-i18n="converter.scan">📂 扫描</button>
+        <button onclick="window._converterSearch()" style="background:var(--neon-cyan);border:none;border-radius:8px;padding:10px 16px;color:#000;font-size:13px;cursor:pointer;white-space:nowrap;" data-i18n="converter.search">🔍 搜索</button>
+        <button onclick="window._converterAddQueue()" style="background:var(--neon-blue);border:none;border-radius:8px;padding:10px 16px;color:#fff;font-size:13px;cursor:pointer;white-space:nowrap;" data-i18n="converter.addQueue">+ 添加</button>
       </div>
 
       <!-- 歌曲列表 + 转换队列并排布局 -->
@@ -426,7 +426,7 @@
         <!-- 左侧：歌曲列表 -->
         <div style="flex:1;display:flex;flex-direction:column;gap:8px;min-width:0;">
           <div style="display:flex;justify-content:space-between;align-items:center;">
-            <span id="converterInfo" style="font-size:12px;color:var(--neon-dim);">加载中...</span>
+            <span id="converterInfo" style="font-size:12px;color:var(--neon-dim);" data-i18n="history.loading">加载中...</span>
             <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--neon-dim);cursor:pointer;">
               <input type="checkbox" id="converterSelectAll" style="accent-color:var(--neon-cyan);"> 全选
             </label>
@@ -436,15 +436,15 @@
 
         <!-- 右侧：转换队列 -->
         <div style="width:320px;display:flex;flex-direction:column;gap:8px;">
-          <div style="font-size:13px;font-weight:600;">转换队列</div>
+          <div style="font-size:13px;font-weight:600;" data-i18n="converter.queueTitle">转换队列</div>
           <div id="converterQueue" style="flex:1;overflow-y:auto;min-height:120px;border:1px solid var(--border);border-radius:8px;padding:8px;"></div>
 
           <!-- 批量设置 -->
           <div id="converterActions" style="display:none;flex-direction:column;gap:8px;padding:10px;background:var(--bg-secondary);border-radius:8px;">
             <!-- 输出目录 -->
             <div style="display:flex;gap:6px;align-items:center;">
-              <span id="converterOutputDir" style="flex:1;font-size:11px;color:var(--neon-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">未设置输出目录</span>
-              <button onclick="window._converterSelectOutputDir()" style="background:var(--neon-blue);border:none;border-radius:4px;padding:4px 8px;color:#fff;font-size:10px;cursor:pointer;white-space:nowrap;">选择</button>
+              <span id="converterOutputDir" style="flex:1;font-size:11px;color:var(--neon-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" data-i18n="converter.outputDir">未设置输出目录</span>
+              <button onclick="window._converterSelectOutputDir()" style="background:var(--neon-blue);border:none;border-radius:4px;padding:4px 8px;color:#fff;font-size:10px;cursor:pointer;white-space:nowrap;" data-i18n="converter.outputDirBtn">选择</button>
             </div>
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
               <select id="converterBatchFormat" style="flex:1;background:var(--bg-input);border:1px solid var(--border);border-radius:6px;padding:6px;color:var(--text);font-size:12px;">
@@ -459,11 +459,11 @@
                 <option value="256k">256k</option>
                 <option value="320k">320k</option>
               </select>
-              <button onclick="window._converterApplyBatch()" style="background:var(--neon-blue);border:none;border-radius:6px;padding:6px 10px;color:#fff;font-size:11px;cursor:pointer;">应用</button>
+              <button onclick="window._converterApplyBatch()" style="background:var(--neon-blue);border:none;border-radius:6px;padding:6px 10px;color:#fff;font-size:11px;cursor:pointer;" data-i18n="converter.apply">应用</button>
             </div>
             <div style="display:flex;gap:6px;">
-              <button onclick="clearDone()" style="flex:1;background:transparent;border:1px solid var(--border);border-radius:6px;padding:6px;color:var(--text);font-size:11px;cursor:pointer;">清空已完成</button>
-              <button id="converterStartBtn" onclick="window._converterStart()" style="flex:1;background:var(--neon-cyan);border:none;border-radius:6px;padding:8px;color:#000;font-size:13px;font-weight:600;cursor:pointer;">开始转换</button>
+              <button onclick="clearDone()" style="flex:1;background:transparent;border:1px solid var(--border);border-radius:6px;padding:6px;color:var(--text);font-size:11px;cursor:pointer;" data-i18n="converter.clearDone">清空已完成</button>
+              <button id="converterStartBtn" onclick="window._converterStart()" style="flex:1;background:var(--neon-cyan);border:none;border-radius:6px;padding:8px;color:#000;font-size:13px;font-weight:600;cursor:pointer;" data-i18n="converter.startConvert">开始转换</button>
             </div>
           </div>
         </div>
@@ -492,8 +492,8 @@
       </div>
 
       <div class="player-song-info">
-        <div class="player-title" id="playerTitle">未在播放</div>
-        <div class="player-artist" id="playerArtist">—</div>
+        <div class="player-title" id="playerTitle" data-i18n="player.playing">未在播放</div>
+        <div class="player-artist" id="playerArtist" data-i18n="player.artist">—</div>
       </div>
 
       <div class="player-progress-wrap">
@@ -534,15 +534,15 @@
     <div class="pq-panel" id="pqPanel">
       <div class="pq-header">
         <div class="pq-header-left">
-          <span class="pq-header-title">播放队列</span>
+          <span class="pq-header-title" data-i18n="player.playQueue">播放队列</span>
           <span class="pq-count" id="pqCount">0</span>
         </div>
-        <button class="pq-clear-btn" onclick="clearPlayQueue()" title="清空队列">🗑️ 清空</button>
+        <button class="pq-clear-btn" onclick="clearPlayQueue()" title="清空队列" data-i18n="player.queue.clear">🗑️ 清空</button>
       </div>
       <div class="pq-list" id="pqList">
         <div class="pq-empty" id="pqEmpty">
           <div class="pq-empty-icon">🎵</div>
-          暂无播放歌曲<br><span style="font-size:11px;opacity:.6;">点击歌曲播放以添加</span>
+          暂无播放歌曲<br><span style="font-size:11px;opacity:.6;" data-i18n="player.queue.hint">点击歌曲播放以添加</span>
         </div>
       </div>
     </div>
@@ -591,7 +591,7 @@
       </div>
     </div>
     <div class="edit-footer">
-      <button class="edit-btn-cancel" onclick="closeEdit()">取消</button>
+      <button class="edit-btn-cancel" onclick="closeEdit()" data-i18n="local.cancel">取消</button>
       <button class="edit-btn-save" id="editSaveBtn" onclick="saveEdit()">保存更改</button>
     </div>
   </div>
@@ -601,7 +601,7 @@
 <div class="settings-overlay hidden" id="settingsOverlay" onclick="closeSettingsOnBg(event)">
   <div class="settings-panel" id="settingsPanel">
     <div class="settings-header">
-      <span class="settings-title">⚙️ 设置</span>
+      <span class="settings-title" data-i18n="settings.title">⚙️ 设置</span>
       <button class="settings-close" onclick="closeSettings()">✕</button>
     </div>
 
@@ -609,13 +609,13 @@
       <!-- 左侧导航 -->
       <nav class="settings-nav">
         <button class="settings-nav-item active" data-tab="accounts" onclick="switchSettingsTab('accounts', this)">
-          <span class="nav-emoji">🔐</span><span>账号</span>
+          <span class="nav-emoji">🔐</span><span data-i18n="settings.accounts">账号</span>
         </button>
         <button class="settings-nav-item" data-tab="general" onclick="switchSettingsTab('general', this)">
-          <span class="nav-emoji">⚙️</span><span>通用</span>
+          <span class="nav-emoji">⚙️</span><span data-i18n="settings.general">通用</span>
         </button>
         <button class="settings-nav-item" data-tab="about" onclick="switchSettingsTab('about', this)">
-          <span class="nav-emoji">ℹ️</span><span>关于</span>
+          <span class="nav-emoji">ℹ️</span><span data-i18n="settings.about">关于</span>
         </button>
       </nav>
 
@@ -630,11 +630,11 @@
                 <span class="account-icon">🎵</span>
                 <div class="account-info">
                   <div class="account-name">网易云音乐</div>
-                  <div class="account-status" id="neteaseStatusText">未登录</div>
+                  <div class="account-status" id="neteaseStatusText" data-i18n="settings.accounts.notLoggedIn">未登录</div>
                 </div>
                 <span class="account-dot" id="neteaseDot"></span>
               </div>
-              <button class="account-primary-btn" id="neteaseLoginBtn" onclick="openLoginWindowUI('netease', this)">
+              <button class="account-primary-btn" id="neteaseLoginBtn" onclick="openLoginWindowUI('netease', this)" data-i18n="settings.accounts.oneClickLogin">
                 🔑 一键登录
               </button>
               <details class="account-advanced">
@@ -644,10 +644,10 @@
                 </div>
                 <textarea class="cookie-textarea" id="neteaseCookie" placeholder="MUSIC_U=xxxx; __csrf=xxxx; ..."></textarea>
                 <div class="cookie-actions">
-                  <button class="cookie-btn-save" onclick="saveCookie('netease')">保存</button>
-                  <button class="cookie-btn-verify" onclick="verifyCookieUI('netease')">验证</button>
-                  <button class="cookie-btn-verify" onclick="analyzeCookieUI('netease')">🔍 分析</button>
-                  <button class="cookie-btn-clear" onclick="clearCookie('netease')">清除</button>
+                  <button class="cookie-btn-save" onclick="saveCookie('netease')" data-i18n="settings.accounts.save">保存</button>
+                  <button class="cookie-btn-verify" onclick="verifyCookieUI('netease')" data-i18n="settings.accounts.verify">验证</button>
+                  <button class="cookie-btn-verify" onclick="analyzeCookieUI('netease')" data-i18n="settings.accounts.analyze">🔍 分析</button>
+                  <button class="cookie-btn-clear" onclick="clearCookie('netease')" data-i18n="settings.accounts.clear">清除</button>
                 </div>
                 <div class="cookie-verify-result" id="neteaseVerifyResult"></div>
                 <div class="cookie-analyze" id="neteaseAnalyze"></div>
@@ -660,11 +660,11 @@
                 <span class="account-icon">🎶</span>
                 <div class="account-info">
                   <div class="account-name">QQ 音乐</div>
-                  <div class="account-status" id="qqStatusText">未登录</div>
+                  <div class="account-status" id="qqStatusText" data-i18n="settings.accounts.notLoggedIn">未登录</div>
                 </div>
                 <span class="account-dot" id="qqDot"></span>
               </div>
-              <button class="account-primary-btn" id="qqLoginBtn" onclick="openLoginWindowUI('qq', this)">
+              <button class="account-primary-btn" id="qqLoginBtn" onclick="openLoginWindowUI('qq', this)" data-i18n="settings.accounts.oneClickLogin">
                 🔑 一键登录
               </button>
               <details class="account-advanced">
@@ -674,10 +674,10 @@
                 </div>
                 <textarea class="cookie-textarea" id="qqCookie" placeholder="uin=xxxx; qm_keyst=xxxx; ..."></textarea>
                 <div class="cookie-actions">
-                  <button class="cookie-btn-save" onclick="saveCookie('qq')">保存</button>
-                  <button class="cookie-btn-verify" onclick="verifyCookieUI('qq')">验证</button>
-                  <button class="cookie-btn-verify" onclick="analyzeCookieUI('qq')">🔍 分析</button>
-                  <button class="cookie-btn-clear" onclick="clearCookie('qq')">清除</button>
+                  <button class="cookie-btn-save" onclick="saveCookie('qq')" data-i18n="settings.accounts.save">保存</button>
+                  <button class="cookie-btn-verify" onclick="verifyCookieUI('qq')" data-i18n="settings.accounts.verify">验证</button>
+                  <button class="cookie-btn-verify" onclick="analyzeCookieUI('qq')" data-i18n="settings.accounts.analyze">🔍 分析</button>
+                  <button class="cookie-btn-clear" onclick="clearCookie('qq')" data-i18n="settings.accounts.clear">清除</button>
                 </div>
                 <div class="cookie-verify-result" id="qqVerifyResult"></div>
                 <div class="cookie-analyze" id="qqAnalyze"></div>
@@ -718,37 +718,37 @@
 
         <!-- 通用页 -->
         <div class="settings-page hidden" id="settingsPageGeneral">
-          <div class="settings-section-title">⚙️ 下载设置</div>
+          <div class="settings-section-title" data-i18n="settings.general.downloadTitle">⚙️ 下载设置</div>
 
           <div class="setting-row">
-            <label class="setting-label">默认音质</label>
+            <label class="setting-label" data-i18n="settings.general.defaultQuality">默认音质</label>
             <select class="setting-select" id="settingQuality">
-              <option value="standard">标准 128k</option>
-              <option value="hq">高品质 320k</option>
-              <option value="lossless">无损 FLAC</option>
+              <option value="standard" data-i18n="search.quality.standard">标准 128k</option>
+              <option value="hq" data-i18n="search.quality.hq">高品质 320k</option>
+              <option value="lossless" data-i18n="search.quality.lossless">无损 FLAC</option>
             </select>
-            <span class="setting-hint">搜索和下载时的默认音质</span>
+            <span class="setting-hint" data-i18n="settings.general.qualityHint">搜索和下载时的默认音质</span>
           </div>
 
           <div class="setting-row">
-            <label class="setting-label">最大并发下载数</label>
+            <label class="setting-label" data-i18n="settings.general.concurrency">最大并发下载数</label>
             <input class="setting-input" id="settingConcurrency" type="number" min="1" max="10" value="3">
-            <span class="setting-hint">同时下载的任务数量（1~10）</span>
+            <span class="setting-hint" data-i18n="settings.general.concurrencyHint">同时下载的任务数量（1~10）</span>
           </div>
 
           <div class="setting-row">
-            <label class="setting-label">下载限速 (KB/s)</label>
+            <label class="setting-label" data-i18n="settings.general.speedLimit">下载限速 (KB/s)</label>
             <input class="setting-input" id="settingSpeedLimit" type="number" min="0" max="10240" value="0" placeholder="0=不限速">
-            <span class="setting-hint">每任务下载速度上限，0 表示不限速</span>
+            <span class="setting-hint" data-i18n="settings.general.speedLimitHint">每任务下载速度上限，0 表示不限速</span>
           </div>
 
           <div class="setting-row">
-            <label class="setting-label">文件名模板</label>
+            <label class="setting-label" data-i18n="settings.general.filenameTmpl">文件名模板</label>
             <input class="setting-input" id="settingFilenameTmpl" value="{artist} - {title}">
             <span class="setting-hint">支持 {artist} {title} {album} {source}</span>
           </div>
 
-          <div class="settings-section-title" style="margin-top:20px">🎵 元数据</div>
+          <div class="settings-section-title" style="margin-top:20px" data-i18n="settings.general.metadataTitle">🎵 元数据</div>
 
           <div class="setting-row">
             <label class="setting-label">
@@ -778,28 +778,28 @@
             </label>
           </div>
 
-          <div class="settings-section-title" style="margin-top:20px">📂 下载路径模板</div>
+          <div class="settings-section-title" style="margin-top:20px" data-i18n="settings.general.dlPathTemplateTitle">📂 下载路径模板</div>
 
           <div class="setting-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
             <div style="display:flex;gap:6px;align-items:center;width:100%;">
-              <button class="setting-btn" onclick="openDlTemplateEditor(null)" style="flex:1;">➕ 新建模板</button>
-              <button class="setting-btn" onclick="loadDownloadTemplates()" style="flex:1;">🔄 刷新</button>
+              <button class="setting-btn" onclick="openDlTemplateEditor(null)" style="flex:1;" data-i18n="settings.general.newTemplate">➕ 新建模板</button>
+              <button class="setting-btn" onclick="loadDownloadTemplates()" style="flex:1;" data-i18n="settings.general.refresh">🔄 刷新</button>
             </div>
             <div id="dlTemplateList" style="width:100%;display:flex;flex-direction:column;gap:4px;"></div>
           </div>
 
-          <div class="settings-section-title" style="margin-top:20px">🎨 外观</div>
+          <div class="settings-section-title" style="margin-top:20px" data-i18n="settings.general.appearanceTitle">🎨 外观</div>
 
           <div class="setting-row">
-            <label class="setting-label">主题</label>
+            <label class="setting-label" data-i18n="settings.general.theme">主题</label>
             <select class="setting-select" id="settingTheme">
-              <option value="auto">🖥️ 跟随系统</option>
-              <option value="default">默认暗色</option>
-              <option value="light">☀️ 浅色</option>
-              <option value="cyber">Cyber 赛博</option>
-              <option value="aurora">Aurora 极光</option>
-              <option value="sunset">Sunset 日落</option>
-              <option value="forest">Forest 森林</option>
+              <option value="auto" data-i18n="settings.general.theme.auto">🖥️ 跟随系统</option>
+              <option value="default" data-i18n="settings.general.theme.default">默认暗色</option>
+              <option value="light" data-i18n="settings.general.theme.light">☀️ 浅色</option>
+              <option value="cyber" data-i18n="settings.general.theme.cyber">Cyber 赛博</option>
+              <option value="aurora" data-i18n="settings.general.theme.aurora">Aurora 极光</option>
+              <option value="sunset" data-i18n="settings.general.theme.sunset">Sunset 日落</option>
+              <option value="forest" data-i18n="settings.general.theme.forest">Forest 森林</option>
             </select>
           </div>
 
@@ -811,10 +811,10 @@
             </select>
           </div>
 
-          <div class="settings-section-title" style="margin-top:20px">🎵 播放器</div>
+          <div class="settings-section-title" style="margin-top:20px" data-i18n="settings.general.playerTitle">🎵 播放器</div>
 
           <div class="setting-row">
-            <label class="setting-label">歌词字体大小</label>
+            <label class="setting-label" data-i18n="settings.general.lyricFontSize">歌词字体大小</label>
             <div style="display:flex;align-items:center;gap:8px;flex:1;">
               <input type="range" id="settingLyricFontSize" min="12" max="32" value="18" step="1"
                 style="flex:1;accent-color:var(--neon-cyan);"
@@ -825,7 +825,7 @@
           </div>
 
           <div class="setting-row">
-            <label class="setting-label">歌词时间偏移</label>
+            <label class="setting-label" data-i18n="settings.general.lyricOffset">歌词时间偏移</label>
             <div style="display:flex;align-items:center;gap:8px;flex:1;">
               <input type="range" id="settingLyricOffset" min="-2000" max="2000" value="0" step="50"
                 style="flex:1;accent-color:var(--neon-cyan);"
@@ -835,7 +835,7 @@
             </div>
           </div>
 
-          <div class="settings-section-title" style="margin-top:20px">🎚️ 均衡器 EQ</div>
+          <div class="settings-section-title" style="margin-top:20px" data-i18n="settings.general.eqTitle">🎚️ 均衡器 EQ</div>
 
           <div id="eqPanel" style="display:flex;flex-direction:column;gap:8px;padding:8px 0;">
             <!-- EQ 预设按钮行 -->
@@ -884,50 +884,56 @@
           })();
           </script>
 
-          <div class="settings-section-title" style="margin-top:20px">🗑️ 缓存管理</div>
+          <div class="settings-section-title" style="margin-top:20px" data-i18n="settings.general.cacheTitle">🗑️ 缓存管理</div>
 
           <div class="setting-row">
             <div style="display:flex;align-items:center;gap:12px;">
-              <button class="setting-btn" onclick="clearPlayCache()">🧹 清理播放缓存</button>
+              <button class="setting-btn" onclick="clearPlayCache()" data-i18n="settings.general.clearCache">🧹 清理播放缓存</button>
               <span id="cacheSizeLabel" style="font-size:12px;color:var(--text-muted)"></span>
             </div>
-            <span class="setting-hint">清除试听产生的临时文件，不会影响已下载的音乐</span>
+            <span class="setting-hint" data-i18n="settings.general.cacheHint">清除试听产生的临时文件，不会影响已下载的音乐</span>
           </div>
 
-          <div class="settings-section-title" style="margin-top:20px">📊 播放统计</div>
+          <div class="settings-section-title" style="margin-top:20px" data-i18n="settings.general.statsTitle">📊 播放统计</div>
 
           <div class="setting-row">
             <div style="display:flex;align-items:center;gap:12px;">
-              <button class="setting-btn" onclick="generatePlayReport()">📊 查看听歌报告</button>
-              <button class="setting-btn" onclick="resetPlayStats()" style="border-color:var(--red);color:var(--red);">🗑 重置统计</button>
+              <button class="setting-btn" onclick="generatePlayReport()" data-i18n="settings.general.viewReport">📊 查看听歌报告</button>
+              <button class="setting-btn" onclick="resetPlayStats()" style="border-color:var(--red);color:var(--red);" data-i18n="settings.general.resetStats">🗑 重置统计</button>
             </div>
-            <span class="setting-hint">查看播放统计和听歌报告</span>
+            <span class="setting-hint" data-i18n="settings.general.statsHint">查看播放统计和听歌报告</span>
           </div>
 
-          <div class="settings-section-title" style="margin-top:20px">🔄 重置设置</div>
+          <div class="settings-section-title" style="margin-top:20px" data-i18n="settings.general.resetTitle">🔄 重置设置</div>
           <div class="setting-row">
-            <button class="setting-btn" onclick="resetAllSettings()" style="border-color:var(--red);color:var(--red);">
+            <button class="setting-btn" onclick="resetAllSettings()" style="border-color:var(--red);color:var(--red);" data-i18n="settings.general.resetAll">
               ⚠️ 恢复所有默认设置
             </button>
-            <span class="setting-hint">将所有设置恢复为出厂默认值（不会删除已下载的音乐和 Cookie）</span>
+            <span class="setting-hint" data-i18n="settings.general.resetHint">将所有设置恢复为出厂默认值（不会删除已下载的音乐和 Cookie）</span>
           </div>
 
         </div>
 
         <!-- 关于页 -->
         <div class="settings-page hidden" id="settingsPageAbout">
-          <div class="settings-section-title">ℹ️ 关于 MusicDL</div>
+          <div class="settings-section-title" data-i18n="settings.about.title">ℹ️ 关于 MusicDL</div>
           <div class="settings-hint-box" style="line-height:2;">
-            <strong>MusicDL</strong> · <span id="appVersion">v1.0.0</span><br>
+            <strong data-i18n="app.title">MusicDL</strong> · <span id="appVersion">v1.0.0</span><br>
             <span id="appCommit" style="color:var(--text-dim,rgba(255,255,255,0.4));font-size:12px;"></span><br>
             多平台音乐下载桌面应用 · Electron 28<br>
             支持：网易云音乐 · QQ音乐 · 哔哩哔哩 · 酷狗音乐<br>
             本项目仅供学习研究使用，请遵守各平台服务条款。
           </div>
 
-          <div class="settings-section-title" style="margin-top:20px">🔗 快捷链接</div>
+          <div style="margin-top:12px;">
+            <button id="checkUpdateBtn" class="setting-btn" onclick="window.checkForUpdate()" style="text-align:left;width:100%;">
+              🔄 检查更新 <span style="color:var(--text-dim,rgba(255,255,255,0.4));font-size:11px;">(自动检查)</span>
+            </button>
+          </div>
+
+          <div class="settings-section-title" style="margin-top:20px" data-i18n="settings.about.linksTitle">🔗 快捷链接</div>
           <div style="display:flex;flex-direction:column;gap:8px;">
-            <button class="setting-btn" onclick="api.openExternal('https://github.com')" style="text-align:left;">
+            <button class="setting-btn" onclick="api.openExternal('https://github.com')" style="text-align:left;" data-i18n="settings.about.github">
               📦 GitHub 仓库
             </button>
             <button class="setting-btn" onclick="api.openExternal('https://music.163.com')" style="text-align:left;">
@@ -941,7 +947,7 @@
             </button>
           </div>
 
-          <div class="settings-section-title" style="margin-top:20px">⌨️ 快捷键</div>
+          <div class="settings-section-title" style="margin-top:20px" data-i18n="settings.about.shortcutsTitle">⌨️ 快捷键</div>
           <div class="settings-hint-box" style="font-size:12px;">
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;">
               <span><kbd style="background:var(--bg-input);padding:2px 6px;border-radius:4px;">Space</kbd> 播放/暂停</span>
