@@ -35,5 +35,5 @@ if (newVersion === pkg.version) {
 
 pkg.version = newVersion;
 fs.writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + '\n');
-cp.execFileSync('git', ['add', pkgPath], { stdio: 'inherit' });
 console.log(`[version-bump] ${pkg.version} → ${newVersion}`);
+// 不在此处 git add（会干扰主 commit 的索引写入），由 hook 自行处理

@@ -24,6 +24,7 @@ module.exports = {
     'dist/renderer/**/*',
     'dist/api/**/*',
     'dist/utils/**/*',
+    'dist/shared/**/*',
     'scripts/**/*',
     'assets/**/*',
     'package.json',
@@ -64,6 +65,9 @@ module.exports = {
     uninstallerIcon: 'assets/icon.ico',
     license: 'LICENSE',
     installerLanguages: ['zh_CN', 'en_US'],
+    // 品牌图片（NSIS 2.0 风格：顶部横幅 + 左侧边栏）
+    installerHeader: 'build/installerHeader.bmp',
+    installerSidebar: 'build/installerSidebar.bmp',
   },
 
   // ── Linux ──────────────────────────────────────────

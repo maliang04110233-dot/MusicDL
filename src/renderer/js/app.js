@@ -28,6 +28,7 @@ import './views/settings.js';
 import './views/ai-music.js';
 import './views/converter.js';
 import './views/playlist.js';
+import './player-controls.js';
 
 // 初始化模块（export 引入，供后续使用）
 import { persistPlayQueue } from './init.js';

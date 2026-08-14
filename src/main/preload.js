@@ -9,6 +9,7 @@ const SAFE_CHANNELS_RECEIVE = new Set([
   'queue-updated', 'download-progress', 'download-finished', 'download-error',
   'search-results', 'play-queue-restored', 'update-available',
   'update-not-available', 'update-download-progress', 'update-downloaded', 'update-error',
+  'focus-search', 'sleep-timer',
 ]);
 
 contextBridge.exposeInMainWorld('miniAPI', {

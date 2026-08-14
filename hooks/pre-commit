@@ -2,9 +2,11 @@
 # MusicDL pre-commit hook
 # 自动递增 package.json version（patch）
 
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
+
 # 如果 package.json 没有变化，跳过
 if ! git diff --cached --name-only | grep -q '^package.json$'; then
-  node "$(dirname "$0")/../scripts/version-bump.js"
+  node "$REPO_ROOT/scripts/version-bump.js" 2>/dev/null
 fi
 
 exit 0

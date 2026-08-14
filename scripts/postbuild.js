@@ -21,6 +21,7 @@ function copyDir(srcDir, destDir) {
 const dirs = [
   { from: path.join(src, 'api'), to: path.join(dist, 'api') },
   { from: path.join(src, 'utils'), to: path.join(dist, 'utils') },
+  { from: path.join(src, 'shared'), to: path.join(dist, 'shared') },
   { from: path.join(src, 'main', 'ipc'), to: path.join(dist, 'main', 'ipc') },
 ];
 

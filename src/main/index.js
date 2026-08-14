@@ -347,6 +347,17 @@ function buildAppMenu() {
     {
       label: '视图',
       submenu: [
+        { label: '聚焦搜索 🔍', accelerator: 'CmdOrCtrl+K', click: () => { mainWindow?.webContents.send('focus-search'); } },
+        { type: 'separator' },
+        { label: '⏰ 定时停止', submenu: [
+          { label: '🛑 取消定时', click: () => mainWindow?.webContents.send('sleep-timer', null) },
+          { type: 'separator' },
+          { label: '⏰ 15 分钟后', click: () => mainWindow?.webContents.send('sleep-timer', 15) },
+          { label: '⏰ 30 分钟后', click: () => mainWindow?.webContents.send('sleep-timer', 30) },
+          { label: '⏰ 60 分钟后', click: () => mainWindow?.webContents.send('sleep-timer', 60) },
+          { label: '⏰ 90 分钟后', click: () => mainWindow?.webContents.send('sleep-timer', 90) },
+        ]},
+        { type: 'separator' },
         { role: 'resetZoom', label: '实际大小' },
         { role: 'zoomIn', label: '放大' },
         { role: 'zoomOut', label: '缩小' },
