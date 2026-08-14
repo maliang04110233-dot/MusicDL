@@ -48,6 +48,10 @@ const TYPE_CONFIG = {
  * @param {number} [duration] - 显示时长 ms（覆盖默认）
  */
 function showToast(msg, type = 'info', duration) {
+  // 自动翻译（英文模式下）
+  if (typeof window.translateMessage === 'function') {
+    msg = window.translateMessage(msg);
+  }
   const cfg = TYPE_CONFIG[type] || TYPE_CONFIG.info;
   const container = document.getElementById('toastContainer');
   if (!container) return;

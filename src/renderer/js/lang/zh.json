@@ -217,5 +217,8 @@
   "toast.resetConfirm": "确认恢复所有设置为默认值？\n\n此操作不会删除：\n• 已下载的音乐文件\n• 平台登录 Cookie\n• 搜索历史",
   "toast.queueRestored": "♻️ 恢复播放队列",
   "toast.loading": "加载中...",
-  "loading.default": "加载中..."
+  "loading.default": "加载中...",
+  "settings.general.backupTitle": "☁️ 备份与恢复",
+  "settings.general.backupExportHint": "导出偏好设置、播放历史、下载记录、下载模板到 JSON 文件",
+  "settings.general.backupImportHint": "从 JSON 备份文件恢复偏好设置和历史记录（需重启生效）"
 }

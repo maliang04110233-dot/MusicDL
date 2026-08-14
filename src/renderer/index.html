@@ -912,6 +912,20 @@
             <span class="setting-hint" data-i18n="settings.general.resetHint">将所有设置恢复为出厂默认值（不会删除已下载的音乐和 Cookie）</span>
           </div>
 
+          <div class="settings-section-title" style="margin-top:20px" data-i18n="settings.general.backupTitle">☁️ 备份与恢复</div>
+          <div class="setting-row">
+            <button class="setting-btn" onclick="exportConfig()" style="text-align:left;">
+              📤 导出配置
+            </button>
+            <span class="setting-hint" data-i18n="settings.general.backupExportHint">导出偏好设置、播放历史、下载记录、下载模板到 JSON 文件</span>
+          </div>
+          <div class="setting-row">
+            <button class="setting-btn" onclick="importConfig()" style="text-align:left;">
+              📥 导入配置
+            </button>
+            <span class="setting-hint" data-i18n="settings.general.backupImportHint">从 JSON 备份文件恢复偏好设置和历史记录（需重启生效）</span>
+          </div>
+
         </div>
 
         <!-- 关于页 -->

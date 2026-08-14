@@ -616,6 +616,35 @@ function parseCookieFields(cookieStr) {
   return fields;
 }
 
+// ── 备份与恢复 ───────────────────────────────────────
+async function exportConfig() {
+  try {
+    const result = await window.ipcRenderer.invoke('export-all-data');
+    if (result.canceled) return;
+    if (result.success) {
+      showToast('✅ 配置已导出: ' + result.path, 'success');
+    } else {
+      showToast('❌ 导出失败: ' + result.error, 'error');
+    }
+  } catch (e) {
+    showToast('导出失败: ' + e.message, 'error');
+  }
+}
+
+async function importConfig() {
+  try {
+    const result = await api.invoke('import-all-data');
+    if (result.canceled) return;
+    if (result.success) {
+      showToast('✅ ' + result.message, 'success', 5000);
+    } else {
+      showToast('❌ ' + result.error, 'error');
+    }
+  } catch (e) {
+    showToast('导入失败: ' + e.message, 'error');
+  }
+}
+
 // ── ES Module 导出 ──────────────────────────────────────
 export {
   openSettings,
@@ -631,6 +660,8 @@ export {
   analyzeCookieUI,
   clearPlayCache,
   resetAllSettings,
+  exportConfig,
+  importConfig,
   loadGeneralSettings,
   applyTheme,
   PLATFORMS,
@@ -650,6 +681,8 @@ window.openLoginWindowUI = openLoginWindowUI;
 window.analyzeCookieUI = analyzeCookieUI;
 window.clearPlayCache = clearPlayCache;
 window.resetAllSettings = resetAllSettings;
+window.exportConfig = exportConfig;
+window.importConfig = importConfig;
 window.loadGeneralSettings = loadGeneralSettings;
 window.applyTheme = applyTheme;
 window.PLATFORMS = PLATFORMS;
