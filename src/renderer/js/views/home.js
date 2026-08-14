@@ -2,7 +2,14 @@
  * MusicDL 首页推荐视图
  */
 
-let homeRecommendations = null;
+let homeRecommendations = {
+  netease: { tops: [], hot: [], newSongs: [], original: [], playlists: [] },
+  qq: { recommend: [], official: [], classic: [], love: [], ktv: [], topList: [], newSongs: [], radios: [], hotSingers: [] },
+  bilibili: { ranking: [] },
+  _loaded: false,
+  _loading: false,
+};
+try { setState('homeRecommendations', homeRecommendations); } catch(_e){}
 
 // home.js 不直接 import api，通过 window.api 访问（由 app.js 在 init 前赋值）
 function _getApi() { return window.api || (typeof api !== 'undefined' ? api : null); }
@@ -23,21 +30,21 @@ function _cacheHomeDom() {
 }
 
 async function loadHomeRecommendations() {
+  console.log('[Home] loadHomeRecommendations called, window.musicAPI=', typeof window.musicAPI, 'window.api=', typeof window.api);
   const _api = _getApi();
+  console.log('[Home] _getApi() result:', _api && typeof _api.getHomeSection, 'has getHomeSection:', typeof _api?.getHomeSection);
   if (!_api || typeof _api.getHomeSection !== 'function') {
+    console.warn('[Home] API not ready, fallback to legacy');
     return loadHomeRecommendationsLegacy();
   }
 
-  // 避免重复加载
-  if (homeRecommendations && homeRecommendations._loaded) {
+  // 允许强制刷新（F5 / 点击重试）
+  if (homeRecommendations && homeRecommendations._loaded && !window._forceHomeRefresh) {
     return;
   }
+  if (window._forceHomeRefresh) window._forceHomeRefresh = false;
 
-  // 初始化空结构（如果还没初始化）
-  if (!homeRecommendations) {
-    homeRecommendations = { netease: {}, qq: {}, bilibili: {}, _loaded: false };
-    setState('homeRecommendations', homeRecommendations);
-  }
+  // 初始化已在模块顶部完成，这里只检查 _loaded 标志
 
   // 只加载默认 Tab（网易云）— QQ/B站 由 switchPlatTab 按需加载
   const neteaseSections = [
@@ -49,6 +56,9 @@ async function loadHomeRecommendations() {
   ];
 
   await Promise.allSettled(neteaseSections.map(([section, render]) => loadHomeSection(section, render)));
+
+  // 所有分区加载完毕，触发全量渲染确保所有 UI 同步
+  renderAllPlatforms();
 
   // 标记加载完成
   homeRecommendations._loaded = true;
@@ -97,11 +107,14 @@ async function loadHomeSection(section, render) {
       new Promise((_, reject) => setTimeout(() => reject(new Error('请求超时(10s)')), 10000)),
     ]);
     if (result?.ok) {
+      console.log(`[Home] ✓ ${section} -> ${(result.data || []).length} items`);
       render(result.data || []);
     } else {
+      console.warn(`[Home] ✗ ${section}:`, result?.error || '加载失败');
       markHomeSectionError(section, result?.error || '加载失败');
     }
   } catch (e) {
+    console.error(`[Home] ✗ ${section} exception:`, e.message);
     markHomeSectionError(section, e.message || String(e));
   }
 }
@@ -116,11 +129,16 @@ async function loadHomeRecommendationsLegacy() {
       return;
     }
     const data = await Promise.race([
-      api.getHomeRecommendations(),
+      _api.getHomeRecommendations(),
       new Promise((_, reject) => setTimeout(() => reject(new Error('请求超时(30s)')), 30000)),
     ]);
-    homeRecommendations = data;
-    homeRecommendations._loaded = true;
+    // 安全合并，保证 netease/qq/bilibili 子结构始终存在
+    homeRecommendations = {
+      netease: { ...homeRecommendations.netease, ...(data?.netease || {}) },
+      qq: { ...homeRecommendations.qq, ...(data?.qq || {}) },
+      bilibili: { ...homeRecommendations.bilibili, ...(data?.bilibili || {}) },
+      _loaded: true,
+    };
     setState('homeRecommendations', homeRecommendations);
     renderAllPlatforms();
   } catch (e) {

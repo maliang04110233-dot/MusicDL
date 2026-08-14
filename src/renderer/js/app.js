@@ -37,7 +37,9 @@ import './logger.js';
 import './updater.js';
 
 // ── API 代理 / Mock ───────────────────────────────────
-const api = window.musicAPI || {
+// 使用 Object.assign 让 api 动态指向真实 window.musicAPI（如果 preload 已暴露）
+// 先声明 mock，然后在 init() 前根据 window.musicAPI 动态覆盖
+const mockApi = {
   getVersion: async () => (window.__APP_VERSION__ || '1.0.0') + (window.__APP_COMMIT__ ? ' (' + window.__APP_COMMIT__.slice(0, 7) + ')' : ''),
   searchMusic: async (k, s) => ({ songs: mockSongs(k, s), source: s }),
   searchAlbum: async () => ({ albums: [], total: 0 }),
@@ -105,6 +107,12 @@ const api = window.musicAPI || {
   restartAndInstall: () => {},
 };
 
+// 优先使用 preload 暴露的真实 musicAPI，否则回退 mock
+// 注意：const api 在模块加载时 window.musicAPI 可能还未就绪（ESM 加载顺序问题）
+// 所以用 let，在 init() 开头再确认一次
+let api = typeof window.musicAPI !== 'undefined' ? window.musicAPI : mockApi;
+console.log('[app.js] module load: api =', typeof window.musicAPI !== 'undefined' ? 'REAL musicAPI' : 'mockApi (musicAPI undefined)');
+
 // Mock 数据生成
 function mockSongs(k, s) {
   return Array.from({ length: 10 }, (_, i) => ({
@@ -131,6 +139,11 @@ let _audio = null;
 
 // ── 初始化 ─────────────────────────────────────────────
 async function init() {
+  // 如果 init 时 window.musicAPI 还没就绪（理论上 preload 已先执行），动态覆盖
+  if (typeof window.musicAPI !== 'undefined') {
+    api = window.musicAPI;
+  }
+
   // 用 setTimeout(0) 确保不阻塞渲染管线
   await new Promise(r => setTimeout(r, 0));
 
@@ -759,8 +772,12 @@ export {
   api,
 }
 
-// ── 全局桥接（HTML onclick 兼容） ──────────────────────
-window.api = api;
+// ── 全局桥接（HTML onclick 兼容）─────────────────────
+// 使用 getter 让 window.api 始终指向当前 api（可能已被真实 musicAPI 替换）
+Object.defineProperty(window, 'api', {
+  get() { return api; },
+  configurable: true,
+});
 window.init = init;
 window.switchTab = switchTab;
 window.changeSaveDir = changeSaveDir;
