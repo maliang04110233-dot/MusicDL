@@ -544,7 +544,8 @@ export { initConverter };
 
 // ── 全局桥接 ──────────────────────────────────────────
 Object.assign(window, {
-  initConverter,
-  _convSongToggle,
-  _convSongAdd,
+initConverter,
+_convSongToggle,
+_convSongAdd,
+clearDone,
 });

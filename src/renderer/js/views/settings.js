@@ -684,6 +684,10 @@ window.resetAllSettings = resetAllSettings;
 window.exportConfig = exportConfig;
 window.importConfig = importConfig;
 window.loadGeneralSettings = loadGeneralSettings;
+window.loadDownloadTemplates = loadDownloadTemplates;
+window.openDlTemplateEditor = openDlTemplateEditor;
+window.closeDlTemplateEditor = closeDlTemplateEditor;
+window.saveDlTemplate = saveDlTemplate;
 window.applyTheme = applyTheme;
 window.PLATFORMS = PLATFORMS;
 

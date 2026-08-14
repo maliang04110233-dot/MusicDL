@@ -779,6 +779,64 @@ window.openAlbumView = openAlbumView;
 window.saveNamingTemplate = saveNamingTemplate;
 window.resetNamingTemplate = resetNamingTemplate;
 
+// ── 播放队列面板 ────────────────────────────────────
+let _pqVisible = false;
+window.togglePlayQueue = () => {
+  const panel = document.getElementById('pqPanel');
+  const btn = document.getElementById('btnQueueToggle');
+  if (!panel) return;
+  _pqVisible = !_pqVisible;
+  panel.style.display = _pqVisible ? 'block' : 'none';
+  if (btn) btn.classList.toggle('active', _pqVisible);
+  renderPlayQueueUI();
+};
+
+function renderPlayQueueUI() {
+  const list = document.getElementById('pqList');
+  const count = document.getElementById('pqCount');
+  const badge = document.getElementById('pqBadge');
+  if (!list) return;
+  const queue = getState('playQueue') || [];
+  const playIdx = getState('playIdx') || 0;
+  if (queue.length === 0) {
+    list.innerHTML = '<div class="pq-empty">暂无播放记录</div>';
+  } else {
+    list.innerHTML = queue.map((s, i) => {
+      const isCur = i === playIdx;
+      return `<div class="pq-item${isCur?' playing':''}" onclick="window._playQueueIdx(${i})">
+        <span class="pq-item-title">${s.title||''}</span>
+        <span class="pq-item-artist">${s.artist||''}</span>
+      </div>`;
+    }).join('');
+  }
+  if (count) count.textContent = queue.length;
+  if (badge) badge.textContent = queue.length > 0 ? String(queue.length) : '';
+}
+
+window._playQueueIdx = (idx) => {
+  const queue = getState('playQueue') || [];
+  if (idx < 0 || idx >= queue.length) return;
+  setState('playIdx', idx);
+  const audio = document.getElementById('audioPlayer');
+  if (audio && queue[idx].url) {
+    audio.src = queue[idx].url;
+    audio.play().catch(e => console.warn('[pq] play failed:', e));
+    setState('currentPlaying', queue[idx]);
+  }
+};
+
+window.clearPlayQueue = () => {
+  setState('playQueue', []);
+  setState('playIdx', 0);
+  setState('currentPlaying', null);
+  renderPlayQueueUI();
+  showToast('播放队列已清空', 'info');
+};
+
+// 监听 playQueue 变化自动刷新 UI
+state.subscribe('playQueue', () => renderPlayQueueUI());
+state.subscribe('playIdx', () => renderPlayQueueUI());
+
 // ── 启动入口（ES Module 自动 defer，DOM 已就绪）───────
 // ESM 脚本默认 defer，DOMContentLoaded 触发时脚本已执行完毕
 // 但为确保兼容性依然监听
