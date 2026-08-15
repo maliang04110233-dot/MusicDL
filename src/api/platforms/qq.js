@@ -559,9 +559,8 @@ async function qqGetCategoryPlaylists(categoryId = 3317, pageNo = 1, pageSize = 
   try {
     // 使用 songlist/list 接口获取分类歌单
     const result = await qqMusic.api('songlist/list', { category: categoryId, pageNo, pageSize });
-    const list = result?.data?.list || result?.list || [];
-    return list.slice(0, pageSize).map(p => {
-      // 尝试多种封面字段，API返回的是 imgurl
+    // result 可能是 undefined（QQ API 返回 400 时），安全兜底
+    const list = (result?.data?.list || result?.list || []).map(p => {
       const cover = p.imgurl || p.cover || p.img || p.pic || p.image || '';
       return {
         id: String(p.dissid || p.id || ''),
@@ -571,8 +570,10 @@ async function qqGetCategoryPlaylists(categoryId = 3317, pageNo = 1, pageSize = 
         source: 'qq',
       };
     });
+    return list.slice(0, pageSize);
   } catch (e) {
-    console.error('QQ分类歌单获取失败:', e.message);
+    // categoryId 无效时 QQ API 返回 400，静默跳过
+    logger.warn(`[qq] categoryPlaylist categoryId=${categoryId} failed: ${e.message}`);
     return [];
   }
 }
