@@ -41,6 +41,7 @@ const SAFE_CHANNELS_INVOKE = new Set([
   'open-mini-player',
   'check-for-update', 'download-update', 'restart-and-install',
   'flush-prefs', 'flush-history',
+  'mini-player-update',
 ]);
 
 // ── 方法名映射：渲染层 camelCase → IPC kebab-case ──
