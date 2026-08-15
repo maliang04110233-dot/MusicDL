@@ -244,7 +244,7 @@ function markHomeSectionError(section, msg) {
   const id = idMap[section];
   const el = id && document.getElementById(id);
   if (el) {
-    el.innerHTML = `<div class="rec-error" onclick="loadHomeRecommendations()" style="color:var(--text-muted);font-size:12px;padding:14px;text-align:center;cursor:pointer;border:1px dashed var(--border);border-radius:8px;">⚠️ ${esc(msg)}，点击重试</div>`;
+    el.innerHTML = `<div class="rec-error" onclick="window._forceHomeRefresh=true;loadHomeRecommendations()" style="color:var(--text-muted);font-size:12px;padding:14px;text-align:center;cursor:pointer;border:1px dashed var(--border);border-radius:8px;">⚠️ ${esc(msg)}，点击重试</div>`;
   }
 }
 
@@ -256,7 +256,7 @@ function clearLoadingPlaceholders() {
   for (const id of ids) {
     const el = document.getElementById(id);
     if (el && el.querySelector('.loading')) {
-      el.innerHTML = `<div class="rec-error" onclick="loadHomeRecommendations()" style="color:var(--text-muted);font-size:12px;padding:14px;text-align:center;cursor:pointer;border:1px dashed var(--border);border-radius:8px;">⚠️ 加载失败，点击重试</div>`;
+      el.innerHTML = `<div class="rec-error" onclick="window._forceHomeRefresh=true;loadHomeRecommendations()" style="color:var(--text-muted);font-size:12px;padding:14px;text-align:center;cursor:pointer;border:1px dashed var(--border);border-radius:8px;">⚠️ 加载失败，点击重试</div>`;
     }
   }
 }

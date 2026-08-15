@@ -110,8 +110,18 @@ const mockApi = {
 // 优先使用 preload 暴露的真实 musicAPI，否则回退 mock
 // 注意：const api 在模块加载时 window.musicAPI 可能还未就绪（ESM 加载顺序问题）
 // 所以用 let，在 init() 开头再确认一次
-let api = typeof window.musicAPI !== 'undefined' ? window.musicAPI : mockApi;
-console.log('[app.js] module load: api =', typeof window.musicAPI !== 'undefined' ? 'REAL musicAPI' : 'mockApi (musicAPI undefined)');
+// 用 Object.assign 合并：真实 musicAPI 的方法优先，缺失的方法回退 mock（防止 is not a function 崩溃）
+function buildApi() {
+  const real = (typeof window.musicAPI !== 'undefined' && window.musicAPI) ? window.musicAPI : null;
+  const merged = Object.assign({}, mockApi, real || {});
+  if (real) {
+    console.log('[app.js] buildApi: 使用 REAL musicAPI, 方法数 =', Object.keys(merged).length);
+  } else {
+    console.log('[app.js] buildApi: musicAPI undefined, 使用 mockApi');
+  }
+  return merged;
+}
+let api = buildApi();
 
 // Mock 数据生成
 function mockSongs(k, s) {
@@ -140,9 +150,7 @@ let _audio = null;
 // ── 初始化 ─────────────────────────────────────────────
 async function init() {
   // 如果 init 时 window.musicAPI 还没就绪（理论上 preload 已先执行），动态覆盖
-  if (typeof window.musicAPI !== 'undefined') {
-    api = window.musicAPI;
-  }
+  api = buildApi();
 
   // 用 setTimeout(0) 确保不阻塞渲染管线
   await new Promise(r => setTimeout(r, 0));
