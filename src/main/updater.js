@@ -12,6 +12,7 @@ const { autoUpdater } = require('electron-updater');
 const { ipcMain } = require('electron');
 const path = require('path');
 const fs = require('fs');
+const logger = require('../utils/logger');
 
 let _updateAvailable = false;
 
