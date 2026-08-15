@@ -101,7 +101,9 @@ ipcMain.handle('restart-and-install', async () => {
  * 启动时检查一次（不自动下载），后续用户手动触发
  */
 function initUpdater() {
-  autoUpdater.checkForUpdates();
+  autoUpdater.checkForUpdates().catch((err) => {
+    logger.warn('[Updater] Initial check failed (expected if no release yet):', err.message);
+  });
 }
 
 module.exports = { initUpdater };
