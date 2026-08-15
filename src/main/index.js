@@ -510,6 +510,14 @@ function registerAllIpcHandlers() {
   ipcMain.on('tray-update-play-state', (_, playState) => {
     updateTrayMenu(playState);
   });
+
+  // ── 版本查询 IPC ───────────────────────────────────
+  ipcMain.handle('get-version', () => {
+    const pkg = require('../../package.json');
+    const version = pkg.version || '1.0.0';
+    const commit = process.env.npm_config_git_commit || '';
+    return commit ? `${version} (${commit.slice(0, 7)})` : version;
+  });
 }
 
 // ⚠️ 此处下方整段（30+ 个 ipcMain.handle/on + proxy-play/play_cache/LRC 解码）
