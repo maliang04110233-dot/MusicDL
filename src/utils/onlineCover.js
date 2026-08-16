@@ -155,19 +155,23 @@ async function fetchCoverFromKugou(title, artist = '') {
  *   - QQ:    2026 年起需 _t 时间戳参数（已修复），无 cookie 也能返回结果
  *   - Kugou: 部分封面可能返回占位图，作为备用
  */
-async function fetchOnlineCover(title, artist = '') {
-  if (!title) return null;
-
-  // 1) QQ 音乐（优先，封面字段 albummid 拿到的图更准确）
-  const qqResult = await fetchCoverFromQQ(title, artist);
-  if (qqResult) return qqResult;
-
-  // 2) 酷狗（备用）
-  const kugouResult = await fetchCoverFromKugou(title, artist);
-  if (kugouResult) return kugouResult;
-
-  return null;
-}
+async function fetchOnlineCover(title, artist = '') {  try {
+    
+    if (!title) return null;
+    
+    // 1) QQ 音乐（优先，封面字段 albummid 拿到的图更准确）
+    const qqResult = await fetchCoverFromQQ(title, artist);
+    if (qqResult) return qqResult;
+    
+    // 2) 酷狗（备用）
+    const kugouResult = await fetchCoverFromKugou(title, artist);
+    if (kugouResult) return kugouResult;
+    
+    return null;
+    
+  } catch (e) {
+    console.error(`[fetchOnlineCover] error:`, e);
+  }
 
 module.exports = {
   fetchOnlineCover,

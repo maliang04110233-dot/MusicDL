@@ -208,15 +208,19 @@ function errorTag(errorCode) {
 }
 
 // ── 单项操作 ─────────────────────────────────────────
-async function toggleQueueDetail(taskId) {
-  if (_expandedDlDetails.has(taskId)) {
+async function toggleQueueDetail(taskId) {  try {
+    
+    if (_expandedDlDetails.has(taskId)) {
     _expandedDlDetails.delete(taskId);
-  } else {
+    } else {
     _expandedDlDetails.add(taskId);
+    }
+    const queue = getState('queueSnapshot') || [];
+    renderQueue(queue);
+    
+  } catch (e) {
+    console.error(`[toggleQueueDetail] error:`, e);
   }
-  const queue = getState('queueSnapshot') || [];
-  renderQueue(queue);
-}
 
 // ── 辅助格式化 ─────────────────────────────────────────
 function formatFileSize(bytes) {

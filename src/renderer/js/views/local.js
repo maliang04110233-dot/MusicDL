@@ -261,20 +261,24 @@ function renderLocalSongs() {
 }
 
 // ── 播放 ──────────────────────────────────────────────
-async function playLocalSong(idx) {
-  const localFiltered = getState('localFiltered');
-  const s = localFiltered[idx];
-  if (!s) return;
-
-  setState('playQueue', localFiltered.slice());
-  setState('playIdx', idx);
-  setState('_currentLocalFilePath', s.filePath);
-
-  await loadAndPlay(s, 'file://' + s.filePath);
-
-  // 高亮当前行
-  renderLocalSongs();
-}
+async function playLocalSong(idx) {  try {
+    
+    const localFiltered = getState('localFiltered');
+    const s = localFiltered[idx];
+    if (!s) return;
+    
+    setState('playQueue', localFiltered.slice());
+    setState('playIdx', idx);
+    setState('_currentLocalFilePath', s.filePath);
+    
+    await loadAndPlay(s, 'file://' + s.filePath);
+    
+    // 高亮当前行
+    renderLocalSongs();
+    
+  } catch (e) {
+    console.error(`[playLocalSong] error:`, e);
+  }
 
 // ── 单曲编辑 ─────────────────────────────────────────
 // ── 编辑弹窗 document 级 click 监听管理 ──────────────
@@ -1271,79 +1275,83 @@ async function batchDownloadCovers() {
 }
 
 // ── 多格式转码 ──────────────────────────────────────────
-async function convertSelectedAudio() {
-  const localFiltered = getState('localFiltered');
-  const selected = getState('selectedSongs');
-  
-  let songsToConvert = [];
-  if (selected && selected.size > 0) {
+async function convertSelectedAudio() {  try {
+    
+    const localFiltered = getState('localFiltered');
+    const selected = getState('selectedSongs');
+    
+    let songsToConvert = [];
+    if (selected && selected.size > 0) {
     // 使用选中的歌曲
     songsToConvert = Array.from(selected).map(i => localFiltered[i]).filter(Boolean);
-  } else if (localFiltered && localFiltered.length > 0) {
+    } else if (localFiltered && localFiltered.length > 0) {
     // 使用第一首歌曲
     songsToConvert = [localFiltered[0]];
-  }
-  
-  if (!songsToConvert.length) {
+    }
+    
+    if (!songsToConvert.length) {
     showToast('请先选择要转换的歌曲', 'warn');
     return;
-  }
-
-  // 显示格式选择弹窗
-  let overlay = document.getElementById('convertModal');
-  if (overlay) overlay.remove();
-
-  overlay = document.createElement('div');
-  overlay.id = 'convertModal';
-  overlay.className = 'edit-overlay';
-  overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
-  overlay.innerHTML = `
+    }
+    
+    // 显示格式选择弹窗
+    let overlay = document.getElementById('convertModal');
+    if (overlay) overlay.remove();
+    
+    overlay = document.createElement('div');
+    overlay.id = 'convertModal';
+    overlay.className = 'edit-overlay';
+    overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
+    overlay.innerHTML = `
     <div class="edit-panel">
-      <div class="edit-header">
-        <span class="edit-title">🔄 音频转码</span>
-        <button class="edit-close" onclick="document.getElementById('convertModal').remove()">✕</button>
-      </div>
-      <div class="edit-body">
-        <div class="edit-field">
-          <label class="edit-label">选择歌曲 (${songsToConvert.length} 首)</label>
-          <div style="max-height:120px;overflow-y:auto;margin-top:6px;">
-            ${songsToConvert.map((s, i) => `
-              <div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;">
-                <input type="checkbox" checked data-convert-idx="${i}" class="convert-checkbox">
-                <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(s.title || '未知')} - ${esc(s.artist || '')}</span>
-                <span style="color:var(--neon-dim);font-size:11px;">${(s.ext || '').toUpperCase()}</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-        <div class="edit-field">
-          <label class="edit-label">输出格式</label>
-          <select class="edit-input" id="convertFormat">
-            <option value="mp3">MP3 (通用)</option>
-            <option value="flac">FLAC (无损)</option>
-            <option value="aac">AAC/M4A</option>
-            <option value="ogg">OGG Vorbis</option>
-            <option value="wav">WAV (无压缩)</option>
-          </select>
-        </div>
-        <div class="edit-field">
-          <label class="edit-label">比特率</label>
-          <select class="edit-input" id="convertBitrate">
-            <option value="128k">128 kbps</option>
-            <option value="192k" selected>192 kbps</option>
-            <option value="256k">256 kbps</option>
-            <option value="320k">320 kbps</option>
-          </select>
-        </div>
-      </div>
-      <div class="edit-footer">
-        <button class="edit-btn-cancel" onclick="document.getElementById('convertModal').remove()">取消</button>
-        <button class="edit-btn-save" onclick="executeConvert()">开始转换</button>
-      </div>
+    <div class="edit-header">
+    <span class="edit-title">🔄 音频转码</span>
+    <button class="edit-close" onclick="document.getElementById('convertModal').remove()">✕</button>
     </div>
-  `;
-  document.body.appendChild(overlay);
-}
+    <div class="edit-body">
+    <div class="edit-field">
+    <label class="edit-label">选择歌曲 (${songsToConvert.length} 首)</label>
+    <div style="max-height:120px;overflow-y:auto;margin-top:6px;">
+    ${songsToConvert.map((s, i) => `
+    <div style="display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;">
+    <input type="checkbox" checked data-convert-idx="${i}" class="convert-checkbox">
+    <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${esc(s.title || '未知')} - ${esc(s.artist || '')}</span>
+    <span style="color:var(--neon-dim);font-size:11px;">${(s.ext || '').toUpperCase()}</span>
+    </div>
+    `).join('')}
+    </div>
+    </div>
+    <div class="edit-field">
+    <label class="edit-label">输出格式</label>
+    <select class="edit-input" id="convertFormat">
+    <option value="mp3">MP3 (通用)</option>
+    <option value="flac">FLAC (无损)</option>
+    <option value="aac">AAC/M4A</option>
+    <option value="ogg">OGG Vorbis</option>
+    <option value="wav">WAV (无压缩)</option>
+    </select>
+    </div>
+    <div class="edit-field">
+    <label class="edit-label">比特率</label>
+    <select class="edit-input" id="convertBitrate">
+    <option value="128k">128 kbps</option>
+    <option value="192k" selected>192 kbps</option>
+    <option value="256k">256 kbps</option>
+    <option value="320k">320 kbps</option>
+    </select>
+    </div>
+    </div>
+    <div class="edit-footer">
+    <button class="edit-btn-cancel" onclick="document.getElementById('convertModal').remove()">取消</button>
+    <button class="edit-btn-save" onclick="executeConvert()">开始转换</button>
+    </div>
+    </div>
+    `;
+    document.body.appendChild(overlay);
+    
+  } catch (e) {
+    console.error(`[convertSelectedAudio] error:`, e);
+  }
 
 async function executeConvert() {
   const format = document.getElementById('convertFormat')?.value || 'mp3';

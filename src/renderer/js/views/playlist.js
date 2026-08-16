@@ -53,18 +53,22 @@ function renderPlaylistList(playlists) {
 }
 
 // ── 打开歌单详情 ──────────────────────────────────────
-async function openPlaylistDetail(playlistId) {
-  _currentPlaylistId = playlistId;
-  const playlists = getState('userPlaylists') || [];
-  const pl = playlists.find(p => p.id === playlistId);
-  if (!pl) return;
-
-  document.getElementById('playlistDetailTitle').textContent = pl.name;
-  document.getElementById('playlistDetailDesc').textContent = pl.desc || '暂无描述';
-  renderPlaylistDetailSongs(pl.songs || []);
-
-  document.getElementById('playlistDetailModal').classList.remove('hidden');
-}
+async function openPlaylistDetail(playlistId) {  try {
+    
+    _currentPlaylistId = playlistId;
+    const playlists = getState('userPlaylists') || [];
+    const pl = playlists.find(p => p.id === playlistId);
+    if (!pl) return;
+    
+    document.getElementById('playlistDetailTitle').textContent = pl.name;
+    document.getElementById('playlistDetailDesc').textContent = pl.desc || '暂无描述';
+    renderPlaylistDetailSongs(pl.songs || []);
+    
+    document.getElementById('playlistDetailModal').classList.remove('hidden');
+    
+  } catch (e) {
+    console.error(`[openPlaylistDetail] error:`, e);
+  }
 
 function closePlaylistDetail() {
   document.getElementById('playlistDetailModal').classList.add('hidden');
@@ -140,31 +144,35 @@ async function removeSongFromPlaylist(songId) {
 }
 
 // ── 新建 / 编辑歌单 ────────────────────────────────────
-async function openPlaylistEditor(playlistId) {
-  const modal = document.getElementById('playlistEditorModal');
-  const titleEl = document.getElementById('playlistEditorTitle');
-  const nameInput = document.getElementById('playlistEditorName');
-  const descInput = document.getElementById('playlistEditorDesc');
-
-  if (playlistId) {
+async function openPlaylistEditor(playlistId) {  try {
+    
+    const modal = document.getElementById('playlistEditorModal');
+    const titleEl = document.getElementById('playlistEditorTitle');
+    const nameInput = document.getElementById('playlistEditorName');
+    const descInput = document.getElementById('playlistEditorDesc');
+    
+    if (playlistId) {
     const playlists = getState('userPlaylists') || [];
     const pl = playlists.find(p => p.id === playlistId);
     if (pl) {
-      titleEl.textContent = '✏️ 编辑歌单';
-      nameInput.value = pl.name;
-      descInput.value = pl.desc || '';
-      modal.dataset.editId = playlistId;
+    titleEl.textContent = '✏️ 编辑歌单';
+    nameInput.value = pl.name;
+    descInput.value = pl.desc || '';
+    modal.dataset.editId = playlistId;
     }
-  } else {
+    } else {
     titleEl.textContent = '📋 新建歌单';
     nameInput.value = '';
     descInput.value = '';
     delete modal.dataset.editId;
+    }
+    
+    modal.classList.remove('hidden');
+    nameInput.focus();
+    
+  } catch (e) {
+    console.error(`[openPlaylistEditor] error:`, e);
   }
-
-  modal.classList.remove('hidden');
-  nameInput.focus();
-}
 
 function closePlaylistEditor() {
   document.getElementById('playlistEditorModal').classList.add('hidden');
@@ -212,9 +220,13 @@ async function savePlaylist() {
 }
 
 // ── 编辑歌单 ───────────────────────────────────────────
-async function editPlaylist(playlistId) {
-  await openPlaylistEditor(playlistId);
-}
+async function editPlaylist(playlistId) {  try {
+    
+    await openPlaylistEditor(playlistId);
+    
+  } catch (e) {
+    console.error(`[editPlaylist] error:`, e);
+  }
 
 // ── 删除歌单 ───────────────────────────────────────────
 async function deletePlaylist(playlistId) {
@@ -233,54 +245,66 @@ async function deletePlaylist(playlistId) {
 }
 
 // ── 快速添加到歌单（右键菜单等场景）────────────────────
-async function quickAddToPlaylist(song) {
-  const playlists = getState('userPlaylists') || [];
-  if (playlists.length === 0) {
+async function quickAddToPlaylist(song) {  try {
+    
+    const playlists = getState('userPlaylists') || [];
+    if (playlists.length === 0) {
     showToast('请先创建一个歌单', 'warn');
     openPlaylistEditor(null);
     return;
-  }
-
-  // 如果只有一个歌单，直接添加；否则弹出选择
-  if (playlists.length === 1) {
+    }
+    
+    // 如果只有一个歌单，直接添加；否则弹出选择
+    if (playlists.length === 1) {
     await addToPlaylistAndNotify(playlists[0].id, song);
     return;
+    }
+    
+    // 显示歌单选择弹层
+    showPlaylistSelectModal(song, playlists);
+    
+  } catch (e) {
+    console.error(`[quickAddToPlaylist] error:`, e);
   }
 
-  // 显示歌单选择弹层
-  showPlaylistSelectModal(song, playlists);
-}
-
-async function showPlaylistSelectModal(song, playlists) {
-  const modal = document.getElementById('playlistSelectModal');
-  const list = document.getElementById('playlistSelectList');
-
-  list.innerHTML = playlists.map(pl => `
+async function showPlaylistSelectModal(song, playlists) {  try {
+    
+    const modal = document.getElementById('playlistSelectModal');
+    const list = document.getElementById('playlistSelectList');
+    
+    list.innerHTML = playlists.map(pl => `
     <div class="playlist-select-item" onclick="addToSelectedPlaylist('${escAttr(pl.id)}')">
-      <span class="playlist-select-icon">📋</span>
-      <span class="playlist-select-name">${esc(pl.name)}</span>
-      <span class="playlist-select-count">${pl.songs?.length || 0} 首</span>
+    <span class="playlist-select-icon">📋</span>
+    <span class="playlist-select-name">${esc(pl.name)}</span>
+    <span class="playlist-select-count">${pl.songs?.length || 0} 首</span>
     </div>
-  `).join('');
-
-  // 存储当前待添加的歌曲
-  modal.dataset.song = JSON.stringify(song);
-  modal.classList.remove('hidden');
-}
+    `).join('');
+    
+    // 存储当前待添加的歌曲
+    modal.dataset.song = JSON.stringify(song);
+    modal.classList.remove('hidden');
+    
+  } catch (e) {
+    console.error(`[showPlaylistSelectModal] error:`, e);
+  }
 
 function closePlaylistSelectModal() {
   document.getElementById('playlistSelectModal').classList.add('hidden');
 }
 
-async function addToSelectedPlaylist(playlistId) {
-  const modal = document.getElementById('playlistSelectModal');
-  const songStr = modal.dataset.song;
-  if (!songStr) return;
-
-  const song = JSON.parse(songStr);
-  await addToPlaylistAndNotify(playlistId, song);
-  closePlaylistSelectModal();
-}
+async function addToSelectedPlaylist(playlistId) {  try {
+    
+    const modal = document.getElementById('playlistSelectModal');
+    const songStr = modal.dataset.song;
+    if (!songStr) return;
+    
+    const song = JSON.parse(songStr);
+    await addToPlaylistAndNotify(playlistId, song);
+    closePlaylistSelectModal();
+    
+  } catch (e) {
+    console.error(`[addToSelectedPlaylist] error:`, e);
+  }
 
 async function addToPlaylistAndNotify(playlistId, song) {
   try {

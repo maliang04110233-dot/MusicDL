@@ -329,21 +329,25 @@ const GENERAL_PREFS = {
   lyricOffset:   { key: 'lyricOffset',   default: 0,             el: 'settingLyricOffset' },
 };
 
-async function loadGeneralSettings() {
-  const prefs = Object.values(GENERAL_PREFS);
-  // 并行加载所有设置
-  const values = await Promise.all(prefs.map(cfg => api.getPref(cfg.key)));
-  prefs.forEach((cfg, i) => {
+async function loadGeneralSettings() {  try {
+    
+    const prefs = Object.values(GENERAL_PREFS);
+    // 并行加载所有设置
+    const values = await Promise.all(prefs.map(cfg => api.getPref(cfg.key)));
+    prefs.forEach((cfg, i) => {
     const el = document.getElementById(cfg.el);
     if (!el) return;
     const v = values[i] !== undefined && values[i] !== null ? values[i] : cfg.default;
     if (el.type === 'checkbox') {
-      el.checked = !!v;
+    el.checked = !!v;
     } else {
-      el.value = String(v);
+    el.value = String(v);
     }
-  });
-}
+    });
+    
+  } catch (e) {
+    console.error(`[loadGeneralSettings] error:`, e);
+  }
 
 // ── 主题切换 ──────────────────────────────────────────
 let _themeMediaQuery = null;
@@ -464,13 +468,17 @@ function renderDownloadTemplates() {
   }).join('');
 }
 
-async function setActiveTemplate(templateId) {
-  await api.setActiveDownloadTemplate(templateId);
-  _dlActiveTemplate = templateId;
-  renderDownloadTemplates();
-  const tpl = _dlTemplates.find(t => t.id === templateId);
-  showToast(`已切换到: ${tpl?.name || '默认路径'}`, 'info');
-}
+async function setActiveTemplate(templateId) {  try {
+    
+    await api.setActiveDownloadTemplate(templateId);
+    _dlActiveTemplate = templateId;
+    renderDownloadTemplates();
+    const tpl = _dlTemplates.find(t => t.id === templateId);
+    showToast(`已切换到: ${tpl?.name || '默认路径'}`, 'info');
+    
+  } catch (e) {
+    console.error(`[setActiveTemplate] error:`, e);
+  }
 
 function openDlTemplateEditor(templateId) {
   const modal = document.getElementById('dlTemplateEditorModal');

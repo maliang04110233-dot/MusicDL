@@ -547,13 +547,17 @@ async function openSingerDetail(singerMid, singerName, source) {
   }
 }
 
-async function switchSingerTab(tab, btn) {
-  _singerDetailTab = tab;
-  document.querySelectorAll('.singer-detail-tabs .tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
-  const singer = state.get('currentSinger');
-  if (singer) await loadSingerDetail(singer.mid, tab);
-}
+async function switchSingerTab(tab, btn) {  try {
+    
+    _singerDetailTab = tab;
+    document.querySelectorAll('.singer-detail-tabs .tab').forEach(t => t.classList.remove('active'));
+    btn.classList.add('active');
+    const singer = state.get('currentSinger');
+    if (singer) await loadSingerDetail(singer.mid, tab);
+    
+  } catch (e) {
+    console.error(`[switchSingerTab] error:`, e);
+  }
 
 async function loadSingerDetail(singerMid, tab) {
   const el = document.getElementById('singerDetailContent');
@@ -746,18 +750,22 @@ function batchPlay() {
 }
 
 // ── 单曲下载 ─────────────────────────────────────────
-async function addDownload(idx) {
-  const songs = getState('songs');
-  const s = songs[idx];
-  if (!s) return;
-  const existing = (state.get('queueSnapshot') || []).find(q =>
+async function addDownload(idx) {  try {
+    
+    const songs = getState('songs');
+    const s = songs[idx];
+    if (!s) return;
+    const existing = (state.get('queueSnapshot') || []).find(q =>
     q.id === s.id && q.source === s.source && q.status !== 'done');
-  if (existing) { showToast(`「${s.title}」已在队列中`, 'warn', 2500); return; }
-  const quality = document.getElementById('qualitySelect').value;
-  const saveDir = getState('saveDir');
-  await api.addToQueue({ ...s, saveDir, quality });
-  showToast(`「${s.title}」已加入下载队列`, 'success');
-}
+    if (existing) { showToast(`「${s.title}」已在队列中`, 'warn', 2500); return; }
+    const quality = document.getElementById('qualitySelect').value;
+    const saveDir = getState('saveDir');
+    await api.addToQueue({ ...s, saveDir, quality });
+    showToast(`「${s.title}」已加入下载队列`, 'success');
+    
+  } catch (e) {
+    console.error(`[addDownload] error:`, e);
+  }
 
 // ── 播放 ─────────────────────────────────────────────
 async function playSong(idx) {

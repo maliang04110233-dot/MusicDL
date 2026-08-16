@@ -82,17 +82,25 @@ const _biliSections = [
 let _qqLoaded = false;
 let _biliLoaded = false;
 
-async function ensureQQLoaded() {
-  if (_qqLoaded) return;
-  _qqLoaded = true;
-  await Promise.allSettled(_qqSections.map(([section, render]) => loadHomeSection(section, render)));
-}
+async function ensureQQLoaded() {  try {
+    
+    if (_qqLoaded) return;
+    _qqLoaded = true;
+    await Promise.allSettled(_qqSections.map(([section, render]) => loadHomeSection(section, render)));
+    
+  } catch (e) {
+    console.error(`[ensureQQLoaded] error:`, e);
+  }
 
-async function ensureBiliLoaded() {
-  if (_biliLoaded) return;
-  _biliLoaded = true;
-  await Promise.allSettled(_biliSections.map(([section, render]) => loadHomeSection(section, render)));
-}
+async function ensureBiliLoaded() {  try {
+    
+    if (_biliLoaded) return;
+    _biliLoaded = true;
+    await Promise.allSettled(_biliSections.map(([section, render]) => loadHomeSection(section, render)));
+    
+  } catch (e) {
+    console.error(`[ensureBiliLoaded] error:`, e);
+  }
 
 async function loadHomeSection(section, render) {
   const _api = _getApi();
@@ -262,10 +270,14 @@ function clearLoadingPlaceholders() {
 }
 
 // ── 推荐歌曲交互 ──────────────────────────────────────
-async function playRecommendById(elId, idx) {
-  const song = state.getRecommend(elId, idx);
-  if (song) await playRecommendSong(song);
-}
+async function playRecommendById(elId, idx) {  try {
+    
+    const song = state.getRecommend(elId, idx);
+    if (song) await playRecommendSong(song);
+    
+  } catch (e) {
+    console.error(`[playRecommendById] error:`, e);
+  }
 
 async function playRecommendSong(song) {
   if (!song) return;
@@ -321,18 +333,22 @@ async function addRecommendDownload(elId, idx) {
   }
 }
 
-async function quickAddRecommendToPlaylist(elId, idx) {
-  const song = state.getRecommend(elId, idx);
-  if (!song) return;
-  // 确保歌单已加载
-  const playlists = getState('userPlaylists') || [];
-  if (playlists.length === 0) {
+async function quickAddRecommendToPlaylist(elId, idx) {  try {
+    
+    const song = state.getRecommend(elId, idx);
+    if (!song) return;
+    // 确保歌单已加载
+    const playlists = getState('userPlaylists') || [];
+    if (playlists.length === 0) {
     await loadUserPlaylists();
-  }
-  if (typeof quickAddToPlaylist === 'function') {
+    }
+    if (typeof quickAddToPlaylist === 'function') {
     quickAddToPlaylist(song);
+    }
+    
+  } catch (e) {
+    console.error(`[quickAddRecommendToPlaylist] error:`, e);
   }
-}
 
 // ── 首页 UI ───────────────────────────────────────────
 function switchPlatTab(tab, btn) {
@@ -410,12 +426,16 @@ function renderRecentlyPlayed() {
 
 // fmtHistoryTime 已由 utils.js 全局导出
 
-async function playRecentSong(idx) {
-  const recent = typeof getRecentlyPlayed === 'function' ? getRecentlyPlayed() : [];
-  const song = recent[idx];
-  if (!song) return;
-  await loadAndPlay(song);
-}
+async function playRecentSong(idx) {  try {
+    
+    const recent = typeof getRecentlyPlayed === 'function' ? getRecentlyPlayed() : [];
+    const song = recent[idx];
+    if (!song) return;
+    await loadAndPlay(song);
+    
+  } catch (e) {
+    console.error(`[playRecentSong] error:`, e);
+  }
 
 // ── ES Module 导出 ──────────────────────────────────────
 export {
